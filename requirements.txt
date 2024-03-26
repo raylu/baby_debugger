@@ -1,3 +1,5 @@
 fastwsgi
 jinja2
+peewee
 pigwig
+psycopg2-binary
