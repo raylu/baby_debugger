@@ -1,0 +1,9 @@
+* {
+	box-sizing: border-box;
+}
+
+body {
+	background-color: #000;
+	color: #aaa;
+	font: 18px Metrophobic, sans-serif;
+}
