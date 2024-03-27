@@ -8,27 +8,35 @@
 	<div>nap 3</div>
 	<div>nap 4</div>
 	<div>night</div>
+
+	<div>total naptime</div>
+	<div>total awake time</div>
 </section>
 <section>
 	<h2>nap 1</h2>
-	<form>
-	<label>morning pick-up<input></label>
-	<label>awake window<input>minutes</label>
-	<label>calm-down time<input>minutes</label>
-	<input type="button" value="→">
-	<label>estimated baby sleep time<input disabled></label>
-	<label>estimated baby put-down time<input disabled></label>
+	<form id="nap1">
+		<label>morning pick-up<input type="time" value="07:00" name="pickup"></label>
+		<div class="awake_window">
+			<label>awake window<input type="range" value="75" min="30" max="180" step="5"></label>
+			<span></span>
+		</div>
+		<label>calm-down time<input type="range" value="0"></label>
+		<input type="button" value="→">
+		<label>estimated baby sleep time<input readonly name="sleep_time"></label>
+		<label>estimated baby put-down time<input readonly value="sleep time - calmdown"></label>
 	</form>
 </section>
 <section>
 	<h2>nap 2</h2>
 	<form>
-	<label>nap 1 wakeup time<input></label>
-	<label>awake window<input>minutes</label>
-	<label>calm-down time<input>minutes</label>
-	<input type="button" value="→">
-	<label>estimated baby sleep time<input disabled></label>
-	<label>estimated baby put-down time<input disabled></label>
+		<label>nap 1 wakeup time<input></label>
+		<label>awake window<input>minutes</label>
+		<label>calm-down time<input>minutes</label>
+		<input type="button" value="→">
+		<label>estimated baby sleep time<input disabled></label>
+		<label>estimated baby put-down time<input disabled></label>
 	</form>
 </section>
+
+<script src="/static/baby_day.js"></script>
 {% endblock %}
