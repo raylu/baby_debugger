@@ -26,7 +26,10 @@ def static(request, file_path: str) -> Response:
 		return Response('not found', 404)
 	content_type, _ = mimetypes.guess_type(file_path)
 	assert content_type is not None
-	return Response(body=content, content_type=content_type)
+	headers = None
+	if file_path.endswith('.js') and path.isfile(path.join('static', file_path + '.map')):
+		headers = [('SourceMap', path.join('/static', file_path + '.map'))]
+	return Response(body=content, content_type=content_type, extra_headers=headers)
 
 routes = [
 	('GET', '/', root),
@@ -37,6 +40,7 @@ routes = [
 app = PigWig(routes, template_dir='templates')
 
 if __name__ == '__main__':
+	mimetypes.add_type('application/json', '.map')
 	port = 8000
 	if len(sys.argv) == 2: # production
 		import fastwsgi
