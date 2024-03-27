@@ -7,3 +7,20 @@ body {
 	color: #aaa;
 	font: 18px Metrophobic, sans-serif;
 }
+
+a {
+    color: #58a;
+    text-decoration: none;
+}
+
+section {
+	display: flex;
+	flex-direction: column;
+	width: 400px;
+	margin: 0 auto;
+}
+
+section > form {
+	display: flex;
+	flex-direction: column;
+}

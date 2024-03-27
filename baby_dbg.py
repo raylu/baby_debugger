@@ -15,6 +15,9 @@ if typing.TYPE_CHECKING:
 def root(request: Request) -> Response:
 	return Response.render(request, 'index.jinja2', {})
 
+def baby_day(request: Request, baby_id, date) -> Response:
+	return Response.render(request, 'baby_day.jinja2', {})
+
 def static(request, file_path: str) -> Response:
 	try:
 		with open(path.join('static', file_path), 'rb') as f:
@@ -27,6 +30,7 @@ def static(request, file_path: str) -> Response:
 
 routes = [
 	('GET', '/', root),
+	('GET', '/baby/<baby_id>/day/<date>', baby_day),
 	('GET', '/static/<path:file_path>', static),
 ]
 
