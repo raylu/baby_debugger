@@ -3,10 +3,13 @@ import {customElement, property} from 'lit/decorators.js';
 
 @customElement('baby-day')
 export class BabyDay extends LitElement {
+	@property({type: String})
+	day = '';
+
 	render() {
 		return html`
 			<section>
-				<h2>randy</h2>
+				<h2>randy &mdash; ${this.day}</h2>
 				<div>nap 1</div>
 				<div>nap 2</div>
 				<div>nap 3</div>
@@ -16,8 +19,8 @@ export class BabyDay extends LitElement {
 				<div>total naptime</div>
 				<div>total awake time</div>
 			</section>
-			<nap-section number="1" wakeUpTime="07:00" awakeWindow="75"></nap-section>
-			<nap-section number="2" awakeWindow="90"></nap-section>
+			<nap-section day="${this.day}" number="1" wakeUpTime="07:00" awakeWindow="75"></nap-section>
+			<nap-section day="${this.day}" number="2" awakeWindow="90"></nap-section>
 		`;
 	}
 
@@ -33,6 +36,9 @@ export class BabyDay extends LitElement {
 
 @customElement('nap-section')
 export class NapSection extends LitElement {
+	@property({type: String})
+	day = '';
+
 	@property({type: Number})
 	number = 0;
 
@@ -64,15 +70,13 @@ export class NapSection extends LitElement {
 	}
 
 	private _estimate(_event: Event) {
-		const [hours, mins] = this.wakeUpTime.split(':').map((n) => Number.parseInt(n));
-		const sleepMins = hours * 60 + mins + this.awakeWindow;
-		this.sleepTime = this._formatTime(sleepMins);
-		const putDownMins = sleepMins - this.calmDown;
-		this.putDownTime = this._formatTime(putDownMins);
+		const wakeUpDate = new Date(`${this.day}T${this.wakeUpTime}`);
+		this.sleepTime = this._formatTime(wakeUpDate, this.awakeWindow);
+		this.putDownTime = this._formatTime(wakeUpDate, this.awakeWindow - this.calmDown);
 	}
 
-	private _formatTime(mins: number) {
-		return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+	private _formatTime(date: Date, deltaMins: number) {
+		return new Date(date.getTime() + deltaMins * 60 * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
 	}
 
 	render() {

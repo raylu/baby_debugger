@@ -10,13 +10,6 @@ enum Page {
 
 @customElement('baby-debugger')
 class BabyDebugger extends LitElement {
-	static styles = css`
-		a {
-			color: #58a;
-			text-decoration: none;
-		}
-	`;
-
 	@state()
 	page = Page.Root;
 
@@ -46,9 +39,18 @@ class BabyDebugger extends LitElement {
 					<a href="baby/1/day/2024-03-26" @click="${this._navigate}">baby 1 2024-03-26</a>
 				`;
 			case Page.BabyDay:
-				return html`<baby-day></baby-day>`;
+				const split = location.pathname.split('/', 5);
+				const day = split[4];
+				return html`<baby-day day="${day}"></baby-day>`;
 		}
 	}
+
+	static styles = css`
+		a {
+			color: #58a;
+			text-decoration: none;
+		}
+	`;
 }
 
 const app = new BabyDebugger();
