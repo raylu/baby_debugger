@@ -32,7 +32,7 @@ class NapSection extends LitElement {
 		this.awakeWindow = Number.parseInt((event.target as HTMLInputElement).value);
 	}
 
-	private _estimate(event: Event) {
+	private _estimate(_event: Event) {
 		const [hours, mins] = this.wakeUpTime.split(':').map((n) => Number.parseInt(n));
 		let sleepMins = hours * 60 + mins + this.awakeWindow;
 		this.sleepTime = `${Math.floor(sleepMins / 60)}:${sleepMins % 60}`;
