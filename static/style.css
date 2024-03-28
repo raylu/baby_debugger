@@ -19,8 +19,3 @@ section {
 	width: 400px;
 	margin: 0 auto;
 }
-
-section > form {
-	display: flex;
-	flex-direction: column;
-}
