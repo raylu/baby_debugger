@@ -1,7 +1,7 @@
 import {html, css, LitElement} from 'lit';
 import {customElement, state} from 'lit/decorators.js';
 
-import {NapSection} from './baby_day';
+import {BabyDay, NapSection} from './baby_day';
 
 enum Page {
 	Root,
@@ -23,10 +23,10 @@ class BabyDebugger extends LitElement {
 	connectedCallback() {
 		super.connectedCallback()
 		addEventListener('popstate', this._handleUrlChange.bind(this));
+		this._handleUrlChange();
 	}
 	
 	private _handleUrlChange() {
-		console.log(location.pathname)
 		if (location.pathname === '/')
 			this.page = Page.Root;
 		else if (location.pathname.startsWith('/baby/'))
@@ -46,9 +46,7 @@ class BabyDebugger extends LitElement {
 					<a href="baby/1/day/2024-03-26" @click="${this._navigate}">baby 1 2024-03-26</a>
 				`;
 			case Page.BabyDay:
-				return html`
-					<nap-section name="nap 1" wakeUpTime="07:00" awakeWindow="75"></nap-section>
-				`;
+				return html`<baby-day></baby-day>`;
 		}
 	}
 }
@@ -56,4 +54,5 @@ class BabyDebugger extends LitElement {
 const app = new BabyDebugger();
 (document.querySelector('body') as HTMLBodyElement).appendChild(app);
 
+void BabyDay;
 void NapSection;
