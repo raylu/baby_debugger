@@ -12,11 +12,8 @@ from pigwig import PigWig, Response
 if typing.TYPE_CHECKING:
 	from pigwig import Request
 
-def root(request: Request) -> Response:
+def root(request: Request, catchall: str | None=None) -> Response:
 	return Response.render(request, 'index.jinja2', {})
-
-def baby_day(request: Request, baby_id, date) -> Response:
-	return Response.render(request, 'baby_day.jinja2', {})
 
 def static(request, file_path: str) -> Response:
 	try:
@@ -33,7 +30,7 @@ def static(request, file_path: str) -> Response:
 
 routes = [
 	('GET', '/', root),
-	('GET', '/baby/<baby_id>/day/<date>', baby_day),
+	('GET', '/<path:catchall>', root),
 	('GET', '/static/<path:file_path>', static),
 ]
 

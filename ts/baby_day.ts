@@ -2,7 +2,7 @@ import {html, css, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 
 @customElement('nap-section')
-class NapSection extends LitElement {
+export class NapSection extends LitElement {
 	static styles = css`
 		section {
 			display: flex;
@@ -58,9 +58,3 @@ class NapSection extends LitElement {
 			</section>`;
 	}
 }
-
-const nap1 = document.createElement('nap-section') as NapSection;
-nap1.name = 'nap 1';
-nap1.wakeUpTime = '07:00';
-nap1.awakeWindow = 75;
-(document.querySelector('body') as HTMLBodyElement).appendChild(nap1);
