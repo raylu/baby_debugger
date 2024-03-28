@@ -42,17 +42,37 @@ export class NapSection extends LitElement {
 	@property({type: Number})
 	awakeWindow = 0;
 
+	@property({type: Number})
+	calmDown = 0;
+
 	@property({type: String})
 	sleepTime = '';
+
+	@property({type: String})
+	putDownTime = '';
+
+	private _wakeUpTimeChange(event: Event) {
+		this.wakeUpTime = (event.target as HTMLInputElement).value;
+	}
 
 	private _awakeWindowChange(event: Event) {
 		this.awakeWindow = Number.parseInt((event.target as HTMLInputElement).value);
 	}
 
+	private _calmDownChange(event: Event) {
+		this.calmDown = Number.parseInt((event.target as HTMLInputElement).value);
+	}
+
 	private _estimate(_event: Event) {
 		const [hours, mins] = this.wakeUpTime.split(':').map((n) => Number.parseInt(n));
-		let sleepMins = hours * 60 + mins + this.awakeWindow;
-		this.sleepTime = `${Math.floor(sleepMins / 60)}:${sleepMins % 60}`;
+		const sleepMins = hours * 60 + mins + this.awakeWindow;
+		this.sleepTime = this._formatTime(sleepMins);
+		const putDownMins = sleepMins - this.calmDown;
+		this.putDownTime = this._formatTime(putDownMins);
+	}
+
+	private _formatTime(mins: number) {
+		return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
 	}
 
 	render() {
@@ -62,18 +82,19 @@ export class NapSection extends LitElement {
 				<form>
 					<label>
 						${this.number === 1 ? 'morning pick-up' : `nap ${this.number - 1} wake-up time`}
-						<input type="time" value="${this.wakeUpTime}">
+						<input type="time" value="${this.wakeUpTime}" @change="${this._wakeUpTimeChange}">
 					</label>
-					<div class="awake_window">
-						<label>awake window
-							<input type="range" value="${this.awakeWindow}" min="30" max="180" step="5" @change="${this._awakeWindowChange}">
-						</label>
-						<span>${this.awakeWindow} minutes</span>
-					</div>
-					<label>calm-down time<input type="range" value="0"></label>
+					<label>awake window
+						<input type="range" value="${this.awakeWindow}" min="30" max="180" step="5" @change="${this._awakeWindowChange}">
+						${this.awakeWindow} minutes
+					</label>
+					<label>calm-down time
+						<input type="range" value="${this.calmDown}" max="60" @change="${this._calmDownChange}">
+						${this.calmDown} minutes
+					</label>
 					<input type="button" value="→" @click="${this._estimate}">
 					<label>estimated baby sleep time<input readonly value="${this.sleepTime}"></label>
-					<label>estimated baby put-down time<input readonly value="sleep time - calmdown"></label>
+					<label>estimated baby put-down time<input readonly value="${this.putDownTime}"></label>
 				</form>
 			</section>`;
 	}
