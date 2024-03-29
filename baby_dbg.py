@@ -18,15 +18,19 @@ def root(request: Request, catchall: str | None=None) -> Response:
 	return Response.render(request, 'index.jinja2', {})
 
 def get_day(request: Request, baby_id: str, day: str) -> Response:
-	baby_day: db.BabyDay = db.BabyDay.select() \
-			.where(db.BabyDay.baby_id==int(baby_id), db.BabyDay.date==day).join(db.Baby).get() # pyright: ignore[reportAttributeAccessIssue]
+	try:
+		baby_day: db.BabyDay = db.BabyDay.select() \
+				.where(db.BabyDay.baby_id==int(baby_id), db.BabyDay.date==day).join(db.Baby).get() # pyright: ignore[reportAttributeAccessIssue]
+	except db.BabyDay.DoesNotExist: # pyright: ignore[reportAttributeAccessIssue]
+		return Response(code=404)
 	naps = db.Nap.select().where(db.Nap.baby_day==baby_day).order_by(db.Nap.number)
 	return Response.json({
 		'baby': {'name': baby_day.baby.name},
 		'day': str(baby_day.date),
-		'naps': [{
-			'number': nap.number, 'wake_up_time': nap.wake_up_time.strftime('%H:%M'),
-			'awake_window': nap.awake_window, 'calm_down_time': nap.calm_down_time} for nap in naps],
+		'naps': {nap.number: {
+			'wake_up_time': nap.wake_up_time.strftime('%H:%M'),
+			'awake_window': nap.awake_window, 'calm_down_time': nap.calm_down_time,
+		} for nap in naps},
 	})
 
 def update_nap(request: Request, baby_id: str, day: str, nap_number: str) -> Response:

@@ -1,9 +1,10 @@
 {
-	"dependencies": {
-		"lit": "^3.1.2"
-	},
-	"scripts": {
-		"build": "bun build --outdir static --sourcemap=external --spliting ts/app.ts",
-		"watch": "bun build --outdir static --sourcemap=external --spliting --watch ts/app.ts"
-	}
+  "dependencies": {
+    "@lit/task": "^1.0.0",
+    "lit": "^3.1.2"
+  },
+  "scripts": {
+    "build": "bun build --outdir static --sourcemap=external --spliting ts/app.ts",
+    "watch": "bun build --outdir static --sourcemap=external --spliting --watch ts/app.ts"
+  }
 }

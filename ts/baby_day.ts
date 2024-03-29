@@ -1,26 +1,59 @@
+import {Task} from '@lit/task';
 import {html, css, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+
+interface DayNaps {
+	baby: {'name': string};
+	day: string;
+	naps: Record<string, Nap>;
+}
+interface Nap {
+	wake_up_time: string;
+	awake_window: number;
+	calm_down_time: number;
+}
 
 @customElement('baby-day')
 export class BabyDay extends LitElement {
 	@property({type: String})
 	day = '';
 
-	render() {
-		return html`
-			<section>
-				<h2>randy &mdash; ${this.day}</h2>
-				<div>nap 1</div>
-				<div>nap 2</div>
-				<div>nap 3</div>
-				<div>nap 4</div>
-				<div>night</div>
+	private _readTask = new Task(this, {
+		task: async ([day], {signal}) => {
+			const response = await fetch('/api/baby/1/day/' + day, {signal});
+			if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+			return await response.json() as DayNaps;
+		},
+		args: () => [this.day]
+	});
 
-				<div>total naptime</div>
-				<div>total awake time</div>
-			</section>
-			<nap-section day="${this.day}" number="1" wakeUpTime="07:00" awakeWindow="75"></nap-section>
-			<nap-section day="${this.day}" number="2" awakeWindow="90"></nap-section>
+	render() {
+		const inner = this._readTask.render({
+			pending: () => html`loading...`,
+			complete: (dayNaps) => html`
+				<section>
+					<h2>${dayNaps.baby.name} &mdash; ${this.day}</h2>
+					<div>nap 1</div>
+					<div>nap 2</div>
+					<div>nap 3</div>
+					<div>nap 4</div>
+					<div>night</div>
+
+					<div>total naptime</div>
+					<div>total awake time</div>
+				</section>
+				${this._renderNap(1, dayNaps.naps[1], 75)}
+				${this._renderNap(2, dayNaps.naps[2], 90)}
+				`,
+			error: (e) => html`${e}`
+		});
+		return html`<section>${inner}</section>`;
+	}
+
+	private _renderNap(number: number, nap: Nap | undefined, defaultAwakeWindow: number) {
+		return html`
+			<nap-section day="${this.day}" number="${number}" wakeUpTime="${nap?.wake_up_time}"
+				awakeWindow="${nap?.awake_window ?? defaultAwakeWindow}" calmDown="${nap?.calm_down_time}"></nap-section>
 		`;
 	}
 
