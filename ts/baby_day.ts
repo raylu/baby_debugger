@@ -1,6 +1,7 @@
 import {Task} from '@lit/task';
 import {html, css, LitElement} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
+import {formatDate} from './date';
 
 interface DayNaps {
 	baby: {'name': string};
@@ -62,24 +63,36 @@ export class BabyDay extends LitElement {
 		const inner = this._readTask.render({
 			pending: () => html`loading...`,
 			complete: () => {
+				let date = new Date(this.day);
+				date = new Date(date.getTime() + date.getTimezoneOffset()*60*1000);
+				const yesterday = new Date();
+				yesterday.setDate(date.getDate() - 1);
+				const tomorrow = new Date();
+				tomorrow.setDate(date.getDate() + 1);
 				return html`
+					<h1>${this.name} &mdash; ${this.day}</h1>
 					<section>
-						<h2>${this.name} &mdash; ${this.day}</h2>
-						<div>nap 1 (${this.naps[0].sleepTime} - ${this.naps[1].wakeUpTime})</div>
-						<div>nap 2 (${this.naps[1].sleepTime} - ${this.naps[2].wakeUpTime})</div>
-						<div>nap 3 (${this.naps[2].sleepTime} - ${this.naps[3].wakeUpTime})</div>
-						<div>nap 4 (${this.naps[3].sleepTime} - ${this.naps[4].wakeUpTime})</div>
-						<div>night</div>
+						<a href="${formatDate(yesterday)}">←</a>
+						<div>
+							<div>nap 1 (${this.naps[0].sleepTime} - ${this.naps[1].wakeUpTime})</div>
+							<div>nap 2 (${this.naps[1].sleepTime} - ${this.naps[2].wakeUpTime})</div>
+							<div>nap 3 (${this.naps[2].sleepTime} - ${this.naps[3].wakeUpTime})</div>
+							<div>nap 4 (${this.naps[3].sleepTime} - ${this.naps[4].wakeUpTime})</div>
+							<div>night</div>
 
-						<div>total naptime</div>
-						<div>total awake time</div>
+							<div>total naptime</div>
+							<div>total awake time</div>
+						</div>
+						<a href="${formatDate(tomorrow)}">→</a>
 					</section>
 					${this.naps}
 				`
 			},
 			error: (e) => html`${e}`
 		});
-		return html`<section>${inner}</section>`;
+		return html`
+			<main>${inner}</main>
+		`;
 	}
 
 	private _renderNap(number: number, nap: Nap | undefined, defaultAwakeWindow: number) {
@@ -98,11 +111,21 @@ export class BabyDay extends LitElement {
 	}
 
 	static styles = css`
+		h1 {
+			width: 400px;
+			margin: 1em auto;
+		}
 		section {
 			display: flex;
-			flex-direction: column;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
 			width: 400px;
 			margin: 0 auto;
+		}
+		a {
+			color: #58a;
+			text-decoration: none;
 		}
 	`;
 }

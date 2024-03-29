@@ -2,6 +2,7 @@ import {html, css, LitElement} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 
 import {BabyDay, NapSection} from './baby_day';
+import {formatDate} from './date';
 
 enum Page {
 	Root,
@@ -41,11 +42,11 @@ class BabyDebugger extends LitElement {
 	}
 
 	render() {
-		const today = new Date().toISOString().slice(0, 10);
+		const now = new Date();
 		switch (this.page) {
 			case Page.Root:
 				return this.babies.map((baby) => html`
-					<a href="baby/${baby['id']}/day/${today}" @click="${this._navigate}">${baby['name']}</a>
+					<a href="baby/${baby['id']}/day/${formatDate(now)}" @click="${this._navigate}">${baby['name']}</a>
 				`);
 			case Page.BabyDay:
 				const split = location.pathname.split('/', 5);
