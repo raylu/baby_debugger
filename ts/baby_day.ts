@@ -17,6 +17,10 @@ const napUpdated = new Event('nap-updated', {composed: true});
 
 @customElement('baby-day')
 export class BabyDay extends LitElement {
+	@property({type: Number})
+	babyID = 0;
+	@property({type: String})
+	name = '';
 	@property({type: String})
 	day = '';
 
@@ -29,29 +33,38 @@ export class BabyDay extends LitElement {
 	}
 
 	private _readTask = new Task(this, {
-		task: async ([day], {signal}) => {
-			const response = await fetch('/api/baby/1/day/' + day, {signal});
-			if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-			const dayNaps = await response.json() as DayNaps;
-			this.naps = [
-				this._renderNap(1, dayNaps.naps[1], 75),
-				this._renderNap(2, dayNaps.naps[2], 90),
-				this._renderNap(3, dayNaps.naps[3], 90),
-				this._renderNap(4, dayNaps.naps[4], 90),
-				this._renderNap(5, dayNaps.naps[3], 105),
-			];
-			return dayNaps;
+		task: async ([babyID, day], {signal}) => {
+			const response = await fetch(`/api/baby/${babyID}/day/${day}`, {signal});
+			if (response.ok) {
+				const dayNaps = await response.json() as DayNaps;
+				this.naps = [
+					this._renderNap(1, dayNaps.naps[1], 75),
+					this._renderNap(2, dayNaps.naps[2], 90),
+					this._renderNap(3, dayNaps.naps[3], 90),
+					this._renderNap(4, dayNaps.naps[4], 90),
+					this._renderNap(5, dayNaps.naps[3], 105),
+				];
+			} else if (response.status === 404)
+				this.naps = [
+					this._renderNap(1, undefined, 75),
+					this._renderNap(2, undefined, 90),
+					this._renderNap(3, undefined, 90),
+					this._renderNap(4, undefined, 90),
+					this._renderNap(5, undefined, 105),
+				];
+			else
+				throw new Error(`${response.status} ${response.statusText}`);
 		},
-		args: () => [this.day]
+		args: () => [this.babyID, this.day],
 	});
 
 	render() {
 		const inner = this._readTask.render({
 			pending: () => html`loading...`,
-			complete: (dayNaps) => {
+			complete: () => {
 				return html`
 					<section>
-						<h2>${dayNaps.baby.name} &mdash; ${this.day}</h2>
+						<h2>${this.name} &mdash; ${this.day}</h2>
 						<div>nap 1 (${this.naps[0].sleepTime} - ${this.naps[1].wakeUpTime})</div>
 						<div>nap 2 (${this.naps[1].sleepTime} - ${this.naps[2].wakeUpTime})</div>
 						<div>nap 3 (${this.naps[2].sleepTime} - ${this.naps[3].wakeUpTime})</div>
@@ -71,6 +84,7 @@ export class BabyDay extends LitElement {
 
 	private _renderNap(number: number, nap: Nap | undefined, defaultAwakeWindow: number) {
 		const napSection = new NapSection();
+		napSection.babyID = this.babyID;
 		napSection.day = this.day;
 		napSection.number = number;
 		if (nap) {
@@ -101,24 +115,20 @@ enum SavingStatus {
 
 @customElement('nap-section')
 export class NapSection extends LitElement {
+	@property({type: Number})
+	babyID = 0;
 	@property({type: String})
 	day = '';
-
 	@property({type: Number})
 	number = 0;
-
 	@property({type: String})
 	wakeUpTime = '';
-
 	@property({type: Number})
 	awakeWindow = 0;
-
 	@property({type: Number})
 	calmDown = 0;
-
 	@property({type: String})
 	sleepTime = '';
-
 	@property({type: String})
 	putDownTime = '';
 
@@ -151,7 +161,7 @@ export class NapSection extends LitElement {
 		this.estimate();
 		this.dispatchEvent(napUpdated);
 		this.saving = SavingStatus.Saving;
-		const response = await fetch(`/api/baby/1/day/${this.day}/nap/${this.number}`, {
+		const response = await fetch(`/api/baby/${this.babyID}/day/${this.day}/nap/${this.number}`, {
 			'method': 'POST',
 			'headers': {'Content-Type': 'application/json'},
 			'body': JSON.stringify({

@@ -17,6 +17,10 @@ if typing.TYPE_CHECKING:
 def root(request: Request, catchall: str | None=None) -> Response:
 	return Response.render(request, 'index.jinja2', {})
 
+def get_babies(request: Request) -> Response:
+	babies = db.Baby.select()
+	return Response.json([{'id': baby.id, 'name': baby.name} for baby in babies])
+
 def get_day(request: Request, baby_id: str, day: str) -> Response:
 	try:
 		baby_day: db.BabyDay = db.BabyDay.select() \
@@ -58,6 +62,7 @@ def static(request, file_path: str) -> Response:
 routes = [
 	('GET', '/', root),
 	('GET', '/<path:catchall>', root),
+	('GET', '/api/babies', get_babies),
 	('GET', '/api/baby/<baby_id>/day/<day>', get_day),
 	('POST', '/api/baby/<baby_id>/day/<day>/nap/<nap_number>', update_nap),
 	('GET', '/static/<path:file_path>', static),

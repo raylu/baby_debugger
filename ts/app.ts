@@ -1,5 +1,5 @@
 import {html, css, LitElement} from 'lit';
-import {customElement, state} from 'lit/decorators.js';
+import {customElement, property, state} from 'lit/decorators.js';
 
 import {BabyDay, NapSection} from './baby_day';
 
@@ -8,8 +8,16 @@ enum Page {
 	BabyDay,
 }
 
+interface Baby {
+	id: number;
+	name: string;
+}
+
 @customElement('baby-debugger')
 class BabyDebugger extends LitElement {
+	@property({type: Array})
+	babies: Baby[] = [];
+
 	@state()
 	page = Page.Root;
 
@@ -33,15 +41,20 @@ class BabyDebugger extends LitElement {
 	}
 
 	render() {
+		const today = new Date().toISOString().slice(0, 10);
 		switch (this.page) {
 			case Page.Root:
-				return html`
-					<a href="baby/1/day/2024-03-26" @click="${this._navigate}">baby 1 2024-03-26</a>
-				`;
+				return this.babies.map((baby) => html`
+					<a href="baby/${baby['id']}/day/${today}" @click="${this._navigate}">${baby['name']}</a>
+				`);
 			case Page.BabyDay:
 				const split = location.pathname.split('/', 5);
+				const babyID = Number.parseInt(split[2]);
 				const day = split[4];
-				return html`<baby-day day="${day}"></baby-day>`;
+				for (const baby of this.babies)
+					if (baby['id'] === babyID)
+						return html`<baby-day babyID="${babyID}" name="${baby['name']}" day="${day}"></baby-day>`;
+				return html`baby not found`;
 		}
 	}
 
@@ -53,8 +66,18 @@ class BabyDebugger extends LitElement {
 	`;
 }
 
-const app = new BabyDebugger();
-(document.querySelector('body') as HTMLBodyElement).appendChild(app);
+(async function() {
+	const body = (document.querySelector('body') as HTMLBodyElement);
+
+	const response = await fetch('/api/babies');
+	if (!response.ok) {
+		body.append(`${response.status}: ${response.statusText}`);
+		return;
+	}
+	const app = new BabyDebugger();
+	app.babies = await response.json();
+	(document.querySelector('body') as HTMLBodyElement).appendChild(app);
+})();
 
 void BabyDay;
 void NapSection;
