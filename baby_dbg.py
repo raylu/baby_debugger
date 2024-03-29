@@ -9,11 +9,22 @@ import typing
 
 from pigwig import PigWig, Response
 
+import db
+
 if typing.TYPE_CHECKING:
 	from pigwig import Request
 
 def root(request: Request, catchall: str | None=None) -> Response:
 	return Response.render(request, 'index.jinja2', {})
+
+def update_nap(request: Request, baby_id: str, day: str, nap_number: str) -> Response:
+	with db.db.atomic():
+		baby_day, _ = db.BabyDay.get_or_create(baby_id=int(baby_id), date=day)
+		(db.Nap.insert(baby_day=baby_day, number=int(nap_number), pickup=request.body['pickup'],
+				awake_window=request.body['awake_window'], calm_down_time=request.body['calm_down_time'])
+				.on_conflict(conflict_target=[db.Nap.baby_day, db.Nap.number],
+						preserve=[db.Nap.pickup, db.Nap.awake_window, db.Nap.calm_down_time]).execute())
+	return Response.json(True)
 
 def static(request, file_path: str) -> Response:
 	try:
@@ -31,10 +42,14 @@ def static(request, file_path: str) -> Response:
 routes = [
 	('GET', '/', root),
 	('GET', '/<path:catchall>', root),
+	('POST', '/api/baby/<baby_id>/day/<day>/nap/<nap_number>', update_nap),
 	('GET', '/static/<path:file_path>', static),
 ]
 
-app = PigWig(routes, template_dir='templates')
+def response_done_handler(request, response) -> None:
+	db.db.close()
+
+app = PigWig(routes, template_dir='templates', response_done_handler=response_done_handler)
 
 if __name__ == '__main__':
 	mimetypes.add_type('application/json', '.map')

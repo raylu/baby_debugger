@@ -1,7 +1,7 @@
-from peewee import (
-	CharField, CompositeKey, DateField, ForeignKeyField, Model, PostgresqlDatabase, SmallIntegerField, TimeField)
+from peewee import CharField, CompositeKey, DateField, ForeignKeyField, Model, SmallIntegerField, TimeField
+import playhouse.pool
 
-db = PostgresqlDatabase('babydbg', host='127.1', user='babydbg')
+db = playhouse.pool.PooledPostgresqlExtDatabase('babydbg', host='127.1', user='babydbg', stale_timeout=300)
 
 class BaseModel(Model):
     class Meta:
