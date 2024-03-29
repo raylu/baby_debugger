@@ -22,7 +22,7 @@ class BabyDay(BaseModel):
 class Nap(BaseModel):
     baby_day = ForeignKeyField(BabyDay)
     number = SmallIntegerField()
-    pickup = TimeField()
+    wake_up_time = TimeField()
     awake_window = SmallIntegerField()
     calm_down_time = SmallIntegerField()
 

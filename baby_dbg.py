@@ -25,17 +25,17 @@ def get_day(request: Request, baby_id: str, day: str) -> Response:
 		'baby': {'name': baby_day.baby.name},
 		'day': str(baby_day.date),
 		'naps': [{
-			'number': nap.number, 'pickup': nap.pickup.strftime('%H:%M'),
+			'number': nap.number, 'wake_up_time': nap.wake_up_time.strftime('%H:%M'),
 			'awake_window': nap.awake_window, 'calm_down_time': nap.calm_down_time} for nap in naps],
 	})
 
 def update_nap(request: Request, baby_id: str, day: str, nap_number: str) -> Response:
 	with db.db.atomic():
 		baby_day, _ = db.BabyDay.get_or_create(baby_id=int(baby_id), date=day)
-		db.Nap.insert(baby_day=baby_day, number=int(nap_number), pickup=request.body['pickup'],
+		db.Nap.insert(baby_day=baby_day, number=int(nap_number), wake_up_time=request.body['wake_up_time'],
 				awake_window=request.body['awake_window'], calm_down_time=request.body['calm_down_time']) \
 				.on_conflict(conflict_target=[db.Nap.baby_day, db.Nap.number],
-						preserve=[db.Nap.pickup, db.Nap.awake_window, db.Nap.calm_down_time]).execute()
+						preserve=[db.Nap.wake_up_time, db.Nap.awake_window, db.Nap.calm_down_time]).execute()
 	return Response.json(True)
 
 def static(request, file_path: str) -> Response:
