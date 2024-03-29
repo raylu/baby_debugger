@@ -14,6 +14,7 @@ interface Nap {
 	calm_down_time: number;
 }
 
+const navigate = new Event('navigate', {composed: true});
 const napUpdated = new Event('nap-updated', {composed: true});
 
 @customElement('baby-day')
@@ -59,6 +60,12 @@ export class BabyDay extends LitElement {
 		args: () => [this.babyID, this.day],
 	});
 
+	private _navigate(event: Event) {
+		event.preventDefault();
+		history.pushState({}, "", (event.target as HTMLAnchorElement).href);
+		this.dispatchEvent(navigate);
+	}
+
 	render() {
 		const inner = this._readTask.render({
 			pending: () => html`loading...`,
@@ -72,7 +79,7 @@ export class BabyDay extends LitElement {
 				return html`
 					<h1>${this.name} &mdash; ${this.day}</h1>
 					<section>
-						<a href="${formatDate(yesterday)}">←</a>
+						<a href="${formatDate(yesterday)}" @click="${this._navigate}">←</a>
 						<div>
 							<div>nap 1 (${this.naps[0].sleepTime} - ${this.naps[1].wakeUpTime})</div>
 							<div>nap 2 (${this.naps[1].sleepTime} - ${this.naps[2].wakeUpTime})</div>
@@ -83,7 +90,7 @@ export class BabyDay extends LitElement {
 							<div>total naptime</div>
 							<div>total awake time</div>
 						</div>
-						<a href="${formatDate(tomorrow)}">→</a>
+						<a href="${formatDate(tomorrow)}" @click="${this._navigate}">→</a>
 					</section>
 					${this.naps}
 				`

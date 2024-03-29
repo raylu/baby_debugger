@@ -21,6 +21,15 @@ class BabyDebugger extends LitElement {
 
 	@state()
 	page = Page.Root;
+	@state()
+	babyID = 0;
+	@state()
+	day = '';
+
+	constructor() {
+		super();
+		this.addEventListener('navigate', this._handleUrlChange);
+	}
 
 	connectedCallback() {
 		super.connectedCallback()
@@ -31,8 +40,12 @@ class BabyDebugger extends LitElement {
 	private _handleUrlChange() {
 		if (location.pathname === '/')
 			this.page = Page.Root;
-		else if (location.pathname.startsWith('/baby/'))
+		else if (location.pathname.startsWith('/baby/')) {
 			this.page = Page.BabyDay;
+			const split = location.pathname.split('/', 5);
+			this.babyID = Number.parseInt(split[2]);
+			this.day = split[4];
+		}
 	}
 
 	private _navigate(event: Event) {
@@ -49,12 +62,9 @@ class BabyDebugger extends LitElement {
 					<a href="baby/${baby['id']}/day/${formatDate(now)}" @click="${this._navigate}">${baby['name']}</a>
 				`);
 			case Page.BabyDay:
-				const split = location.pathname.split('/', 5);
-				const babyID = Number.parseInt(split[2]);
-				const day = split[4];
 				for (const baby of this.babies)
-					if (baby['id'] === babyID)
-						return html`<baby-day babyID="${babyID}" name="${baby['name']}" day="${day}"></baby-day>`;
+					if (baby['id'] === this.babyID)
+						return html`<baby-day babyID="${this.babyID}" name="${baby['name']}" day="${this.day}"></baby-day>`;
 				return html`baby not found`;
 		}
 	}
