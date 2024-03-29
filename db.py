@@ -1,7 +1,12 @@
+import pathlib
+
 from peewee import CharField, CompositeKey, DateField, ForeignKeyField, Model, SmallIntegerField, TimeField
 import playhouse.pool
 
-db = playhouse.pool.PooledPostgresqlExtDatabase('babydbg', host='127.1', user='babydbg', stale_timeout=300)
+_pool_args = {'database': 'babydbg', 'user': 'babydbg', 'stale_timeout': 300}
+if not pathlib.Path('/var/run/postgresql').is_dir():
+	_pool_args['host'] = '127.1'
+db = playhouse.pool.PooledPostgresqlExtDatabase(**_pool_args)
 
 class BaseModel(Model):
 	class Meta:
