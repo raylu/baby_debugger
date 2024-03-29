@@ -77,7 +77,7 @@ export class BabyDay extends LitElement {
 			napSection.wakeUpTime = nap.wake_up_time;
 			napSection.awakeWindow = nap.awake_window;
 			napSection.calmDown = nap.calm_down_time;
-			napSection.estimate(null);
+			napSection.estimate();
 		} else
 			napSection.awakeWindow = defaultAwakeWindow;
 		return napSection;
@@ -91,6 +91,12 @@ export class BabyDay extends LitElement {
 			margin: 0 auto;
 		}
 	`;
+}
+
+enum SavingStatus {
+	None,
+	Saving,
+	Error
 }
 
 @customElement('nap-section')
@@ -116,6 +122,9 @@ export class NapSection extends LitElement {
 	@property({type: String})
 	putDownTime = '';
 
+	@state()
+	saving = SavingStatus.None;
+
 	private _wakeUpTimeChange(event: Event) {
 		this.wakeUpTime = (event.target as HTMLInputElement).value;
 	}
@@ -128,21 +137,48 @@ export class NapSection extends LitElement {
 		this.calmDown = Number.parseInt((event.target as HTMLInputElement).value);
 	}
 
-	estimate(_event: Event | null) {
+	estimate() {
 		const wakeUpDate = new Date(`${this.day}T${this.wakeUpTime}`);
 		this.sleepTime = this._formatTime(wakeUpDate, this.awakeWindow);
 		this.putDownTime = this._formatTime(wakeUpDate, this.awakeWindow - this.calmDown);
-		this.dispatchEvent(napUpdated);
 	}
 
 	private _formatTime(date: Date, deltaMins: number) {
 		return new Date(date.getTime() + deltaMins * 60 * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
 	}
 
+	private async _handleClick(_event: Event) {
+		this.estimate();
+		this.dispatchEvent(napUpdated);
+		this.saving = SavingStatus.Saving;
+		const response = await fetch(`/api/baby/1/day/${this.day}/nap/${this.number}`, {
+			'method': 'POST',
+			'headers': {'Content-Type': 'application/json'},
+			'body': JSON.stringify({
+				'wake_up_time': this.wakeUpTime,
+				'awake_window': this.awakeWindow,
+				'calm_down_time': this.calmDown,
+			})
+		});
+		if (response.ok)
+			this.saving = SavingStatus.None;
+		else
+			this.saving = SavingStatus.Error;
+	}
+
 	render() {
+		let buttonLabel;
+		switch (this.saving) {
+			case SavingStatus.None:
+				buttonLabel = '→'; break;
+			case SavingStatus.Saving:
+				buttonLabel = 'saving...'; break;
+			case SavingStatus.Error:
+				buttonLabel = 'error';
+		}
 		return html`
 			<section>
-				<h2>nap ${this.number}</h2>
+				<h2>${this.number == 5 ? 'night' : `nap ${this.number}`}</h2>
 				<form>
 					<label>
 						${this.number === 1 ? 'morning pick-up' : `nap ${this.number - 1} wake-up time`}
@@ -156,7 +192,8 @@ export class NapSection extends LitElement {
 						<input type="range" value="${this.calmDown}" max="60" @change="${this._calmDownChange}">
 						${this.calmDown} minutes
 					</label>
-					<input type="button" value="→" @click="${this.estimate}">
+					<input type="button" value="${buttonLabel}"
+						@click="${this._handleClick}" ?disabled="${!this.wakeUpTime || this.saving != SavingStatus.None}">
 					<label>estimated baby sleep time<input readonly value="${this.sleepTime}"></label>
 					<label>estimated baby put-down time<input readonly value="${this.putDownTime}"></label>
 				</form>
