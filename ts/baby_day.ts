@@ -7,6 +7,7 @@ interface DayNaps {
 	baby: {'name': string};
 	day: string;
 	naps: Record<string, Nap>;
+	cached: boolean | undefined;
 }
 interface Nap {
 	wake_up_time: string;
@@ -39,22 +40,25 @@ export class BabyDay extends LitElement {
 			const response = await fetch(`/api/baby/${babyID}/day/${day}`, {signal});
 			if (response.ok) {
 				const dayNaps = await response.json() as DayNaps;
+				const cached = dayNaps.cached ?? false;
 				this.naps = [
-					this._renderNap(1, dayNaps.naps[1], 75),
-					this._renderNap(2, dayNaps.naps[2], 90),
-					this._renderNap(3, dayNaps.naps[3], 90),
-					this._renderNap(4, dayNaps.naps[4], 90),
-					this._renderNap(5, dayNaps.naps[3], 105),
+					this._renderNap(1, dayNaps.naps[1], cached, 75),
+					this._renderNap(2, dayNaps.naps[2], cached, 90),
+					this._renderNap(3, dayNaps.naps[3], cached, 90),
+					this._renderNap(4, dayNaps.naps[4], cached, 90),
+					this._renderNap(5, dayNaps.naps[3], cached, 105),
 				];
-			} else if (response.status === 404)
+				return {'cached': cached};
+			} else if (response.status === 404) {
 				this.naps = [
-					this._renderNap(1, undefined, 75),
-					this._renderNap(2, undefined, 90),
-					this._renderNap(3, undefined, 90),
-					this._renderNap(4, undefined, 90),
-					this._renderNap(5, undefined, 105),
+					this._renderNap(1, undefined, false, 75),
+					this._renderNap(2, undefined, false, 90),
+					this._renderNap(3, undefined, false, 90),
+					this._renderNap(4, undefined, false, 90),
+					this._renderNap(5, undefined, false, 105),
 				];
-			else
+				return {'cached': false};
+			} else
 				throw new Error(`${response.status} ${response.statusText}`);
 		},
 		args: () => [this.babyID, this.day],
@@ -69,7 +73,7 @@ export class BabyDay extends LitElement {
 	render() {
 		const inner = this._readTask.render({
 			pending: () => html`loading...`,
-			complete: () => {
+			complete: (result) => {
 				let date = new Date(this.day);
 				date = new Date(date.getTime() + date.getTimezoneOffset()*60*1000);
 				const yesterday = new Date();
@@ -81,6 +85,7 @@ export class BabyDay extends LitElement {
 					<section>
 						<a href="${formatDate(yesterday)}" @click="${this._navigate}">←</a>
 						<div>
+							${result.cached ? html`<div class="offline">offline mode; saving disabled</div>` : ''}
 							<div>nap 1 (${this.naps[0].sleepTime} - ${this.naps[1].wakeUpTime})</div>
 							<div>nap 2 (${this.naps[1].sleepTime} - ${this.naps[2].wakeUpTime})</div>
 							<div>nap 3 (${this.naps[2].sleepTime} - ${this.naps[3].wakeUpTime})</div>
@@ -102,11 +107,12 @@ export class BabyDay extends LitElement {
 		`;
 	}
 
-	private _renderNap(number: number, nap: Nap | undefined, defaultAwakeWindow: number) {
+	private _renderNap(number: number, nap: Nap | undefined, cached: boolean, defaultAwakeWindow: number) {
 		const napSection = new NapSection();
 		napSection.babyID = this.babyID;
 		napSection.day = this.day;
 		napSection.number = number;
+		napSection.cached = cached;
 		if (nap) {
 			napSection.wakeUpTime = nap.wake_up_time;
 			napSection.awakeWindow = nap.awake_window;
@@ -134,6 +140,10 @@ export class BabyDay extends LitElement {
 			color: #58a;
 			text-decoration: none;
 		}
+		.offline {
+			color: #c75;
+			font-weight: bold;
+		}
 	`;
 }
 
@@ -151,6 +161,8 @@ export class NapSection extends LitElement {
 	day = '';
 	@property({type: Number})
 	number = 0;
+	@property({type: Boolean})
+	cached = false;
 	@property({type: String})
 	wakeUpTime = '';
 	@property({type: Number})
@@ -233,7 +245,7 @@ export class NapSection extends LitElement {
 						minutes
 					</label>
 					<input type="button" value="${buttonLabel}"
-						@click="${this._handleClick}" ?disabled="${!this.wakeUpTime || this.saving != SavingStatus.None}">
+						@click="${this._handleClick}" ?disabled="${!this.wakeUpTime || this.saving != SavingStatus.None || this.cached}">
 					<label>estimated baby sleep time<input readonly value="${this.sleepTime}"></label>
 					<label>estimated baby put-down time<input readonly value="${this.putDownTime}"></label>
 				</form>

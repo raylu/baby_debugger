@@ -38,12 +38,21 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 			return networkResponse;
 		} catch (err) {
 			let request: RequestInfo | URL = event.request;
-			if (request.url.startsWith('/baby/'))
+			if (request.url.startsWith('/baby/')) // catchall
 				request = '/';
 			const cachedResponse = await cache.match(request);
-			if (cachedResponse)
+			if (cachedResponse) {
+				if (cachedResponse.url.match(String.raw`/api/baby/\d+/day/\d\d\d\d-\d\d-\d\d$`))
+					return await rewriteDay(cachedResponse);
 				return cachedResponse;
+			}
 			throw err;
 		}
 	})());
 });
+
+async function rewriteDay(response: Response): Promise<Response> {
+	const babyDay = await response.json();
+	babyDay['cached'] = true;
+	return new Response(JSON.stringify(babyDay), {'headers': response.headers});
+}
