@@ -46,6 +46,10 @@ def update_nap(request: Request, baby_id: str, day: str, nap_number: str) -> Res
 						preserve=[db.Nap.wake_up_time, db.Nap.awake_window, db.Nap.calm_down_time]).execute()
 	return Response.json(True)
 
+def service_worker(request: Request) -> Response:
+	with open(path.join('static', 'service_worker.js'), 'rb') as f:
+		return Response(body=f.read(), content_type='application/javascript')
+
 def static(request, file_path: str) -> Response:
 	try:
 		with open(path.join('static', file_path), 'rb') as f:
@@ -65,6 +69,7 @@ routes = [
 	('GET', '/api/babies', get_babies),
 	('GET', '/api/baby/<baby_id>/day/<day>', get_day),
 	('POST', '/api/baby/<baby_id>/day/<day>/nap/<nap_number>', update_nap),
+	('GET', '/service_worker.js', service_worker),
 	('GET', '/static/<path:file_path>', static),
 ]
 

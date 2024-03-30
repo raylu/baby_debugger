@@ -88,6 +88,11 @@ class BabyDebugger extends LitElement {
 	const app = new BabyDebugger();
 	app.babies = await response.json();
 	(document.querySelector('body') as HTMLBodyElement).appendChild(app);
+
+	navigator.serviceWorker.register('/service_worker.js');
+	addEventListener('beforeinstallprompt', (event) => {
+		console.log('installable!', event);
+	})
 })();
 
 void BabyDay;

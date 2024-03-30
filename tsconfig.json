@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		// https://bun.sh/docs/typescript
-		"lib": ["DOM", "ESNext"],
+		"lib": ["DOM", "WebWorker", "ESNext"],
 		"target": "ESNext",
 		"module": "ESNext",
 		"moduleDetection": "force",

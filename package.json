@@ -4,7 +4,7 @@
     "lit": "^3.1.2"
   },
   "scripts": {
-    "build": "bun build --outdir static --sourcemap=external --spliting ts/app.ts",
-    "watch": "bun build --outdir static --sourcemap=external --spliting --watch ts/app.ts"
+    "build": "bun build --outdir static --sourcemap=external --spliting ts/app.ts ts/service_worker.ts",
+    "watch": "bun run build --watch"
   }
 }

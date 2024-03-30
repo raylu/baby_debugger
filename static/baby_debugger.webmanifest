@@ -1,0 +1,21 @@
+{
+	"name": "baby debugger",
+	"short_name": "baby debugger",
+	"description": "Track awake windows",
+	"icons": [
+		{
+			"src": "/static/icon.svg",
+			"sizes": "34x80",
+			"type": "image/svg+xml"
+		},
+		{
+			"src": "/static/icon.png",
+			"sizes": "256x268",
+			"type": "image/png"
+		}
+	],
+	"start_url": "/",
+	"display": "minimal-ui",
+	"theme_color": "#222",
+	"background_color": "#222"
+}
