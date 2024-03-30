@@ -29,6 +29,8 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 });
 
 self.addEventListener('fetch', (event: FetchEvent) => {
+	if (event.request.method !== 'GET')
+		return;
 	event.respondWith((async () => {
 		const cache = await caches.open(cacheName);
 		try {
