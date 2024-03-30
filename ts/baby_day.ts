@@ -237,12 +237,16 @@ export class NapSection extends LitElement {
 						<input type="time" value="${this.wakeUpTime}" @change="${this._wakeUpTimeChange}">
 					</label>
 					<label>awake window
-						<input type="number" value="${this.awakeWindow}" min="30" max="180" step="5" @change="${this._awakeWindowChange}">
-						minutes
+						<span>
+							<input type="number" value="${this.awakeWindow}" min="30" max="180" step="5" @change="${this._awakeWindowChange}">
+							minutes
+						</span>
 					</label>
 					<label>calm-down time
-						<input type="number" value="${this.calmDown}" min="0" max="60" @change="${this._calmDownChange}">
-						minutes
+						<span>
+							<input type="number" value="${this.calmDown}" min="0" max="60" @change="${this._calmDownChange}">
+							minutes
+						</span>
 					</label>
 					<input type="button" value="${buttonLabel}"
 						@click="${this._handleClick}" ?disabled="${!this.wakeUpTime || this.saving != SavingStatus.None || this.cached}">
@@ -257,11 +261,37 @@ export class NapSection extends LitElement {
 			display: flex;
 			flex-direction: column;
 			width: 400px;
-			margin: 0 auto;
+			margin: 1em auto;
+			padding: 10px;
+			border: 1px solid #111;
 		}
 		section > form {
 			display: flex;
 			flex-direction: column;
+			gap: 1em;
+		}
+		h2 {
+			margin: 0 0 1em;
+		}
+
+		label {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		label > input[readonly] {
+			border: 0;
+			width: 10ch;
+		}
+
+		input {
+			color: inherit;
+			background-color: #111;
+			border: 1px solid #777;
+			padding: 4px;
+		}
+		input[type="time"]::-webkit-calendar-picker-indicator {
+			filter: invert(0.7);
 		}
 	`;
 }
