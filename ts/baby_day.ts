@@ -225,12 +225,12 @@ export class NapSection extends LitElement {
 						<input type="time" value="${this.wakeUpTime}" @change="${this._wakeUpTimeChange}">
 					</label>
 					<label>awake window
-						<input type="range" value="${this.awakeWindow}" min="30" max="180" step="5" @change="${this._awakeWindowChange}">
-						${this.awakeWindow} minutes
+						<input type="number" value="${this.awakeWindow}" min="30" max="180" step="5" @change="${this._awakeWindowChange}">
+						minutes
 					</label>
 					<label>calm-down time
-						<input type="range" value="${this.calmDown}" max="60" @change="${this._calmDownChange}">
-						${this.calmDown} minutes
+						<input type="number" value="${this.calmDown}" min="0" max="60" @change="${this._calmDownChange}">
+						minutes
 					</label>
 					<input type="button" value="${buttonLabel}"
 						@click="${this._handleClick}" ?disabled="${!this.wakeUpTime || this.saving != SavingStatus.None}">
