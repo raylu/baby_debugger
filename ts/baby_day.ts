@@ -46,7 +46,7 @@ export class BabyDay extends LitElement {
 					this._renderNap(2, dayNaps.naps[2], cached, 90),
 					this._renderNap(3, dayNaps.naps[3], cached, 90),
 					this._renderNap(4, dayNaps.naps[4], cached, 90),
-					this._renderNap(5, dayNaps.naps[3], cached, 105),
+					this._renderNap(5, dayNaps.naps[5], cached, 105),
 				];
 				return {'cached': cached};
 			} else if (response.status === 404) {
