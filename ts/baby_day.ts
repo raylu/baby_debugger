@@ -81,6 +81,20 @@ export class BabyDay extends LitElement {
 				yesterday.setDate(date.getDate() - 1);
 				const tomorrow = new Date();
 				tomorrow.setDate(date.getDate() + 1);
+
+				let totalNapMins = 0;
+				let totalAwakeMins = 0;
+				this.naps.forEach((napSection, i) => {
+					if (!napSection.wakeUpTime)
+						return;
+					totalAwakeMins += napSection.awakeWindow;
+					if (i > 0 && this.naps[i-1].wakeUpTime) {
+						const sleepHrs = this.naps[i-1].sleepTimeDate.getHours();
+						const sleepMins = this.naps[i-1].sleepTimeDate.getMinutes();
+						const [wakeHrs, wakeMins] = napSection.wakeUpTime.split(':', 2).map((n) => parseInt(n));
+						totalNapMins += (wakeHrs - sleepHrs) * 60 + wakeMins - sleepMins;
+					}
+				});
 				return html`
 					<h1>${this.name} &mdash; ${this.day}</h1>
 					<section>
@@ -88,14 +102,16 @@ export class BabyDay extends LitElement {
 						<div>
 							${result.cached ? html`<div class="offline">offline mode; saving disabled</div>` : ''}
 							<div>morning (...${this.naps[0].wakeUpTime})</div>
-							<div>nap 1 (${this.naps[0].sleepTime} - ${this._formatTime(this.naps[1].wakeUpTime)})</div>
-							<div>nap 2 (${this.naps[1].sleepTime} - ${this._formatTime(this.naps[2].wakeUpTime)})</div>
-							<div>nap 3 (${this.naps[2].sleepTime} - ${this._formatTime(this.naps[3].wakeUpTime)})</div>
-							<div>nap 4 (${this.naps[3].sleepTime} - ${this._formatTime(this.naps[4].wakeUpTime)})</div>
-							<div>night (${this.naps[4].sleepTime}...)</div>
+							<div>nap 1 (${this.naps[0].sleepTimeFormatted} - ${this._formatTime(this.naps[1].wakeUpTime)})</div>
+							<div>nap 2 (${this.naps[1].sleepTimeFormatted} - ${this._formatTime(this.naps[2].wakeUpTime)})</div>
+							<div>nap 3 (${this.naps[2].sleepTimeFormatted} - ${this._formatTime(this.naps[3].wakeUpTime)})</div>
+							<div>nap 4 (${this.naps[3].sleepTimeFormatted} - ${this._formatTime(this.naps[4].wakeUpTime)})</div>
+							<div>night (${this.naps[4].sleepTimeFormatted}...)</div>
 
-							<div>total naptime</div>
-							<div>total awake time</div>
+							<div class="total">
+								total naptime: ${this._formatDuration(totalNapMins)}
+								<br>total awake time: ${this._formatDuration(totalAwakeMins)}
+							</div>
 						</div>
 						<a href="${formatDate(tomorrow)}" @click="${this._navigate}">→</a>
 					</section>
@@ -131,6 +147,13 @@ export class BabyDay extends LitElement {
 		return new Date(`${this.day}T${time}`).toLocaleTimeString([], timeFormat);
 	}
 
+	private _formatDuration(mins: number): string {
+		if (mins > 60)
+			return `${Math.floor(mins / 60)}hrs ${mins % 60}mins`;
+		else
+			return mins + ' minutes';
+	}
+
 	static styles = css`
 		h1 {
 			width: 400px;
@@ -151,6 +174,9 @@ export class BabyDay extends LitElement {
 		.offline {
 			color: #c75;
 			font-weight: bold;
+		}
+		.total {
+			margin-top: 1em;
 		}
 	`;
 }
@@ -178,7 +204,9 @@ export class NapSection extends LitElement {
 	@property({type: Number})
 	calmDown = 0;
 	@property({type: String})
-	sleepTime = '';
+	sleepTimeFormatted = '';
+	@property({type: Date})
+	sleepTimeDate = new Date();
 	@property({type: String})
 	putDownTime = '';
 
@@ -199,12 +227,15 @@ export class NapSection extends LitElement {
 
 	estimate() {
 		const wakeUpDate = new Date(`${this.day}T${this.wakeUpTime}`);
-		this.sleepTime = this._formatTime(wakeUpDate, this.awakeWindow);
-		this.putDownTime = this._formatTime(wakeUpDate, this.awakeWindow - this.calmDown);
+		const sleepTime = this._formatTime(wakeUpDate, this.awakeWindow);
+		this.sleepTimeFormatted = sleepTime.formatted;
+		this.sleepTimeDate = sleepTime.date;
+		this.putDownTime = this._formatTime(wakeUpDate, this.awakeWindow - this.calmDown).formatted;
 	}
 
 	private _formatTime(date: Date, deltaMins: number) {
-		return new Date(date.getTime() + deltaMins * 60 * 1000).toLocaleTimeString([], timeFormat);
+		const dt = new Date(date.getTime() + deltaMins * 60 * 1000);
+		return {'date': dt, 'formatted': dt.toLocaleTimeString([], timeFormat)};
 	}
 
 	private async _handleClick(_event: Event) {
@@ -258,7 +289,7 @@ export class NapSection extends LitElement {
 					</label>
 					<input type="button" value="${buttonLabel}"
 						@click="${this._handleClick}" ?disabled="${!this.wakeUpTime || this.saving != SavingStatus.None || this.cached}">
-					<label>estimated baby sleep time<input readonly value="${this.sleepTime}"></label>
+					<label>estimated baby sleep time<input readonly value="${this.sleepTimeFormatted}"></label>
 					<label>estimated baby put-down time<input readonly value="${this.putDownTime}"></label>
 				</form>
 			</section>`;
