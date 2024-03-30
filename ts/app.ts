@@ -64,7 +64,10 @@ class BabyDebugger extends LitElement {
 			case Page.BabyDay:
 				for (const baby of this.babies)
 					if (baby['id'] === this.babyID)
-						return html`<baby-day babyID="${this.babyID}" name="${baby['name']}" day="${this.day}"></baby-day>`;
+						return html`
+							<a href="/" @click="${this._navigate}">home</a>
+							<baby-day babyID="${this.babyID}" name="${baby['name']}" day="${this.day}"></baby-day>
+						`;
 				return html`baby not found`;
 		}
 	}
