@@ -15,6 +15,7 @@ interface Nap {
 	calm_down_time: number;
 }
 
+const timeFormat: Intl.DateTimeFormatOptions = {hour: "2-digit", minute: "2-digit"};
 const navigate = new Event('navigate', {composed: true});
 const napUpdated = new Event('nap-updated', {composed: true});
 
@@ -42,20 +43,20 @@ export class BabyDay extends LitElement {
 				const dayNaps = await response.json() as DayNaps;
 				const cached = dayNaps.cached ?? false;
 				this.naps = [
-					this._renderNap(1, dayNaps.naps[1], cached, 75),
-					this._renderNap(2, dayNaps.naps[2], cached, 90),
-					this._renderNap(3, dayNaps.naps[3], cached, 90),
-					this._renderNap(4, dayNaps.naps[4], cached, 90),
-					this._renderNap(5, dayNaps.naps[5], cached, 105),
+					this._makeNap(1, dayNaps.naps[1], cached, 75),
+					this._makeNap(2, dayNaps.naps[2], cached, 90),
+					this._makeNap(3, dayNaps.naps[3], cached, 90),
+					this._makeNap(4, dayNaps.naps[4], cached, 90),
+					this._makeNap(5, dayNaps.naps[5], cached, 105),
 				];
 				return {'cached': cached};
 			} else if (response.status === 404) {
 				this.naps = [
-					this._renderNap(1, undefined, false, 75),
-					this._renderNap(2, undefined, false, 90),
-					this._renderNap(3, undefined, false, 90),
-					this._renderNap(4, undefined, false, 90),
-					this._renderNap(5, undefined, false, 105),
+					this._makeNap(1, undefined, false, 75),
+					this._makeNap(2, undefined, false, 90),
+					this._makeNap(3, undefined, false, 90),
+					this._makeNap(4, undefined, false, 90),
+					this._makeNap(5, undefined, false, 105),
 				];
 				return {'cached': false};
 			} else
@@ -86,11 +87,12 @@ export class BabyDay extends LitElement {
 						<a href="${formatDate(yesterday)}" @click="${this._navigate}">←</a>
 						<div>
 							${result.cached ? html`<div class="offline">offline mode; saving disabled</div>` : ''}
-							<div>nap 1 (${this.naps[0].sleepTime} - ${this.naps[1].wakeUpTime})</div>
-							<div>nap 2 (${this.naps[1].sleepTime} - ${this.naps[2].wakeUpTime})</div>
-							<div>nap 3 (${this.naps[2].sleepTime} - ${this.naps[3].wakeUpTime})</div>
-							<div>nap 4 (${this.naps[3].sleepTime} - ${this.naps[4].wakeUpTime})</div>
-							<div>night</div>
+							<div>morning (...${this.naps[0].wakeUpTime})</div>
+							<div>nap 1 (${this.naps[0].sleepTime} - ${this._formatTime(this.naps[1].wakeUpTime)})</div>
+							<div>nap 2 (${this.naps[1].sleepTime} - ${this._formatTime(this.naps[2].wakeUpTime)})</div>
+							<div>nap 3 (${this.naps[2].sleepTime} - ${this._formatTime(this.naps[3].wakeUpTime)})</div>
+							<div>nap 4 (${this.naps[3].sleepTime} - ${this._formatTime(this.naps[4].wakeUpTime)})</div>
+							<div>night (${this.naps[4].sleepTime}...)</div>
 
 							<div>total naptime</div>
 							<div>total awake time</div>
@@ -107,7 +109,7 @@ export class BabyDay extends LitElement {
 		`;
 	}
 
-	private _renderNap(number: number, nap: Nap | undefined, cached: boolean, defaultAwakeWindow: number) {
+	private _makeNap(number: number, nap: Nap | undefined, cached: boolean, defaultAwakeWindow: number) {
 		const napSection = new NapSection();
 		napSection.babyID = this.babyID;
 		napSection.day = this.day;
@@ -121,6 +123,12 @@ export class BabyDay extends LitElement {
 		} else
 			napSection.awakeWindow = defaultAwakeWindow;
 		return napSection;
+	}
+
+	private _formatTime(time: string): string {
+		if (!time)
+			return '';
+		return new Date(`${this.day}T${time}`).toLocaleTimeString([], timeFormat);
 	}
 
 	static styles = css`
@@ -196,7 +204,7 @@ export class NapSection extends LitElement {
 	}
 
 	private _formatTime(date: Date, deltaMins: number) {
-		return new Date(date.getTime() + deltaMins * 60 * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+		return new Date(date.getTime() + deltaMins * 60 * 1000).toLocaleTimeString([], timeFormat);
 	}
 
 	private async _handleClick(_event: Event) {
