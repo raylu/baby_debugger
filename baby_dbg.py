@@ -8,6 +8,7 @@ import sys
 import typing
 
 from pigwig import PigWig, Response
+import webauthn
 
 import db
 
@@ -17,6 +18,17 @@ if typing.TYPE_CHECKING:
 
 def root(request: Request, catchall: str | None=None) -> Response:
 	return Response.render(request, 'index.jinja2', {})
+
+def register_challenge(request: Request) -> Response:
+	host = request.headers['Host']
+	if ':' in host:
+		host = host.split(':', 1)[0]
+	username = request.body['username']
+	if host not in ['babydebugger.app', 'localhost'] or len(username) < 2:
+		return Response(code=400)
+	reg_opts = webauthn.generate_registration_options(rp_id=host, rp_name='baby debugger',
+			user_name=username)
+	return Response(webauthn.options_to_json(reg_opts), content_type='application/json')
 
 def get_babies(request: Request) -> Response:
 	babies = db.Baby.select()
@@ -67,6 +79,7 @@ def static(request, file_path: str) -> Response:
 routes: RouteDefinition = [
 	('GET', '/', root),
 	('GET', '/<path:catchall>', root),
+	('POST', '/api/register/challenge', register_challenge),
 	('GET', '/api/babies', get_babies),
 	('GET', '/api/baby/<baby_id>/day/<day>', get_day),
 	('POST', '/api/baby/<baby_id>/day/<day>/nap/<nap_number>', update_nap),

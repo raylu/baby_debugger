@@ -6,6 +6,7 @@ import {formatDate} from './date';
 
 enum Page {
 	Root,
+	Register,
 	BabyDay,
 }
 
@@ -40,6 +41,8 @@ class BabyDebugger extends LitElement {
 	private _handleUrlChange() {
 		if (location.pathname === '/')
 			this.page = Page.Root;
+		else if (location.pathname === '/register')
+			this.page = Page.Register;
 		else if (location.pathname.startsWith('/baby/')) {
 			this.page = Page.BabyDay;
 			const split = location.pathname.split('/', 5);
@@ -54,13 +57,40 @@ class BabyDebugger extends LitElement {
 		this._handleUrlChange();
 	}
 
+	private async _register(event: Event) {
+		event.preventDefault();
+		const username = (this.renderRoot.querySelector('input') as HTMLInputElement).value;
+		const response = await fetch('/api/register/challenge', {
+			'method': 'POST',
+			'headers': {'Content-Type': 'application/json'},
+			'body': JSON.stringify({username}),
+		});
+		const pkOpts = await response.json();
+		pkOpts['challenge'] = this._decode_urlsafebase64(pkOpts['challenge']);
+		pkOpts['user']['id'] = this._decode_urlsafebase64(pkOpts['user']['id']);
+		const credential = await navigator.credentials.create({'publicKey': pkOpts});
+	}
+
+	private _decode_urlsafebase64(urlsafeb64: string): Uint8Array {
+		const b64 = urlsafeb64.replace(/-/g, '+').replace(/_/g, '/');
+		return Uint8Array.from(atob(b64), (b) => b.codePointAt(0) as number);
+	}
+
 	render() {
-		const now = new Date();
 		switch (this.page) {
 			case Page.Root:
+				const now = new Date();
 				return this.babies.map((baby) => html`
 					<a href="baby/${baby['id']}/day/${formatDate(now)}" @click="${this._navigate}">${baby['name']}</a>
-				`);
+					<br>
+				`).concat([html`<a href="/register" @click="${this._navigate}">register</a>`]);
+			case Page.Register:
+				return html`
+					<form>
+						<label>username: <input type="text"></label>
+						<br><input type="button" @click="${this._register}" value="register">
+					</form>
+				`
 			case Page.BabyDay:
 				for (const baby of this.babies)
 					if (baby['id'] === this.babyID)
