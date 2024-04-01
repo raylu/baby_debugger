@@ -1,7 +1,7 @@
 import {html, css, LitElement} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 
-import {BabyDay, NapSection} from './baby_day';
+import './baby_day';
 import {formatDate} from './date';
 
 enum Page {
@@ -97,6 +97,3 @@ class BabyDebugger extends LitElement {
 		console.log('installable!', event);
 	})
 })();
-
-void BabyDay;
-void NapSection;
