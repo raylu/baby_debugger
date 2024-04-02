@@ -38,6 +38,6 @@ if __name__ == '__main__':
 	if Baby.table_exists():
 		print('baby table already exists')
 	else:
-		print('creating tables...')
-		db.create_tables([Baby, BabyDay, Nap], safe=False)
+		print('creating tables', ', '.join(c.__name__ for c in BaseModel.__subclasses__()))
+		db.create_tables(BaseModel.__subclasses__(), safe=False)
 		Baby(name='randy').save()
