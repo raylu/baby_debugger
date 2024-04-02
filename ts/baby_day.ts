@@ -43,18 +43,18 @@ export class BabyDay extends LitElement {
 				const dayNaps = await response.json() as DayNaps;
 				const cached = dayNaps.cached ?? false;
 				this.naps = [
-					this._makeNap(1, dayNaps.naps[1], cached, 75),
-					this._makeNap(2, dayNaps.naps[2], cached, 90),
-					this._makeNap(3, dayNaps.naps[3], cached, 90),
+					this._makeNap(1, dayNaps.naps[1], cached, 80),
+					this._makeNap(2, dayNaps.naps[2], cached, 95),
+					this._makeNap(3, dayNaps.naps[3], cached, 95),
 					this._makeNap(4, dayNaps.naps[4], cached, 90),
 					this._makeNap(5, dayNaps.naps[5], cached, 105),
 				];
 				return {'cached': cached};
 			} else if (response.status === 404) {
 				this.naps = [
-					this._makeNap(1, undefined, false, 75),
-					this._makeNap(2, undefined, false, 90),
-					this._makeNap(3, undefined, false, 90),
+					this._makeNap(1, undefined, false, 80),
+					this._makeNap(2, undefined, false, 95),
+					this._makeNap(3, undefined, false, 95),
 					this._makeNap(4, undefined, false, 90),
 					this._makeNap(5, undefined, false, 105),
 				];
@@ -202,7 +202,7 @@ export class NapSection extends LitElement {
 	@property({type: Number})
 	awakeWindow = 0;
 	@property({type: Number})
-	calmDown = 0;
+	calmDown = 15;
 	@property({type: String})
 	sleepTimeFormatted = '';
 	@property({type: Date})
