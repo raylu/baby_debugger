@@ -7,8 +7,10 @@ from os import path
 import sys
 import typing
 
+import peewee
 from pigwig import PigWig, Response
 import webauthn
+import webauthn.helpers.exceptions
 
 import db
 
@@ -26,9 +28,28 @@ def register_challenge(request: Request) -> Response:
 	username = request.body['username']
 	if host not in ['babydebugger.app', 'localhost'] or len(username) < 2:
 		return Response(code=400)
-	reg_opts = webauthn.generate_registration_options(rp_id=host, rp_name='baby debugger',
-			user_name=username)
+	reg_opts = webauthn.generate_registration_options(rp_id=host, rp_name='baby debugger', user_name=username)
+
+	five_minutes = peewee.SQL("INTERVAL '5 minutes'")
+	db.WebAuthnChallenge.delete().where(db.WebAuthnChallenge.created < peewee.fn.NOW() - five_minutes).execute()
+	db.WebAuthnChallenge(id=reg_opts.user.id, challenge=reg_opts.challenge).save()
 	return Response(webauthn.options_to_json(reg_opts), content_type='application/json')
+
+def register_attest(request: Request) -> Response:
+	credential = request.body['credential']
+	challenge = db.WebAuthnChallenge.get_by_id(credential['id'])
+
+	host = request.headers['Host']
+	if ':' in host:
+		host = host.split(':', 1)[0]
+	try:
+		registration = webauthn.verify_registration_response(credential=credential,
+			expected_challenge=challenge.challenge, expected_rp_id=host,
+			expected_origin=['https://babydebugger.app', 'http://localhost:8000'])
+	except webauthn.helpers.exceptions.InvalidRegistrationResponse:
+		return Response(code=403)
+	print(registration)
+	return Response.json(True)
 
 def get_babies(request: Request) -> Response:
 	babies = db.Baby.select()
@@ -80,6 +101,7 @@ routes: RouteDefinition = [
 	('GET', '/', root),
 	('GET', '/<path:catchall>', root),
 	('POST', '/api/register/challenge', register_challenge),
+	('POST', '/api/register/attest', register_attest),
 	('GET', '/api/babies', get_babies),
 	('GET', '/api/baby/<baby_id>/day/<day>', get_day),
 	('POST', '/api/baby/<baby_id>/day/<day>/nap/<nap_number>', update_nap),

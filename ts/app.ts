@@ -60,20 +60,41 @@ class BabyDebugger extends LitElement {
 	private async _register(event: Event) {
 		event.preventDefault();
 		const username = (this.renderRoot.querySelector('input') as HTMLInputElement).value;
-		const response = await fetch('/api/register/challenge', {
+		const challengeResponse = await fetch('/api/register/challenge', {
 			'method': 'POST',
 			'headers': {'Content-Type': 'application/json'},
 			'body': JSON.stringify({username}),
 		});
-		const pkOpts = await response.json();
+		const pkOpts = await challengeResponse.json();
 		pkOpts['challenge'] = this._decode_urlsafebase64(pkOpts['challenge']);
 		pkOpts['user']['id'] = this._decode_urlsafebase64(pkOpts['user']['id']);
-		const credential = await navigator.credentials.create({'publicKey': pkOpts});
+		const credential = await navigator.credentials.create({'publicKey': pkOpts}) as PublicKeyCredential;
+
+		const credResponse = credential.response as AuthenticatorAttestationResponse;
+		const credObj = {
+			'type': credential.type,
+			'id': credential.id,
+			'rawId': this._encode_base64(credential.rawId),
+			'response': {
+				'attestationObject': this._encode_base64(credResponse.attestationObject),
+				'clientDataJSON': this._encode_base64(credResponse.clientDataJSON),
+				'transports': credResponse.getTransports(),
+			}
+		};
+		const attestationResponse = await fetch('/api/register/attest', {
+			'method': 'POST',
+			'headers': {'Content-Type': 'application/json'},
+			'body': JSON.stringify({'credential': credObj}),
+		});
 	}
 
 	private _decode_urlsafebase64(urlsafeb64: string): Uint8Array {
 		const b64 = urlsafeb64.replace(/-/g, '+').replace(/_/g, '/');
 		return Uint8Array.from(atob(b64), (b) => b.codePointAt(0) as number);
+	}
+
+	private _encode_base64(bytes: ArrayBuffer): string {
+		return btoa(String.fromCharCode(...new Uint8Array(bytes)));
 	}
 
 	render() {

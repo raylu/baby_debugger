@@ -1,6 +1,7 @@
 import pathlib
 
-from peewee import CharField, CompositeKey, DateField, ForeignKeyField, Model, SmallIntegerField, TimeField
+from peewee import BlobField, CharField, CompositeKey, DateField, DateTimeField, ForeignKeyField, Model, \
+	SQL, SmallIntegerField, TimeField
 import playhouse.pool
 
 _pool_args = {'database': 'babydbg', 'user': 'babydbg', 'stale_timeout': 300}
@@ -11,6 +12,14 @@ db = playhouse.pool.PooledPostgresqlExtDatabase(**_pool_args)
 class BaseModel(Model):
 	class Meta:
 		database = db
+
+class User(BaseModel):
+	username = CharField()
+
+class WebAuthnChallenge(BaseModel):
+	id = BlobField(primary_key=True)
+	challenge = BlobField()
+	created = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
 
 class Baby(BaseModel):
 	name = CharField()
