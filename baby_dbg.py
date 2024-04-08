@@ -13,6 +13,7 @@ import db
 
 if typing.TYPE_CHECKING:
 	from pigwig import Request
+	from pigwig.routes import RouteDefinition
 
 def root(request: Request, catchall: str | None=None) -> Response:
 	return Response.render(request, 'index.jinja2', {})
@@ -58,12 +59,12 @@ def static(request, file_path: str) -> Response:
 		return Response('not found', 404)
 	content_type, _ = mimetypes.guess_type(file_path)
 	assert content_type is not None
-	headers = None
+	headers: list[tuple[str, str]] | None = None
 	if file_path.endswith('.js') and path.isfile(path.join('static', file_path + '.map')):
 		headers = [('SourceMap', path.join('/static', file_path + '.map'))]
 	return Response(body=content, content_type=content_type, extra_headers=headers)
 
-routes = [
+routes: RouteDefinition = [
 	('GET', '/', root),
 	('GET', '/<path:catchall>', root),
 	('GET', '/api/babies', get_babies),
