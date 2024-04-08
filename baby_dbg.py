@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 import mimetypes
 from os import path
+import struct
 import sys
+import time
 import typing
 
-import peewee
 from pigwig import PigWig, Response
 import webauthn
 import webauthn.helpers.exceptions
 
+import config
 import db
 
 if typing.TYPE_CHECKING:
@@ -25,31 +30,43 @@ def register_challenge(request: Request) -> Response:
 	host = request.headers['Host']
 	if ':' in host:
 		host = host.split(':', 1)[0]
-	username = request.body['username']
+	username: str = request.body['username']
 	if host not in ['babydebugger.app', 'localhost'] or len(username) < 2:
 		return Response(code=400)
-	reg_opts = webauthn.generate_registration_options(rp_id=host, rp_name='baby debugger', user_name=username)
 
-	five_minutes = peewee.SQL("INTERVAL '5 minutes'")
-	db.WebAuthnChallenge.delete().where(db.WebAuthnChallenge.created < peewee.fn.NOW() - five_minutes).execute()
-	db.WebAuthnChallenge(id=reg_opts.user.id, challenge=reg_opts.challenge).save()
+	challenge = struct.pack('Q', int(time.time())) + username.encode('utf-8')[:24]
+	challenge = _sign(challenge) + challenge
+	reg_opts = webauthn.generate_registration_options(rp_id=host, rp_name='baby debugger',
+			user_name=username, challenge=challenge)
 	return Response(webauthn.options_to_json(reg_opts), content_type='application/json')
 
 def register_attest(request: Request) -> Response:
-	credential = request.body['credential']
-	challenge = db.WebAuthnChallenge.get_by_id(credential['id'])
+	username: str = request.body['username']
+	credential: dict = request.body['credential']
+	client_data = json.loads(webauthn.base64url_to_bytes(credential['response']['clientDataJSON']))
+	challenge = webauthn.base64url_to_bytes(client_data['challenge'])
+	(ts,) = struct.unpack('Q', challenge[32:40])
+	if ts + 300 < time.time():
+		return Response('challenge expired', code=403)
+	if username.encode('utf-8')[:24] != challenge[40:]:
+		return Response('username does not match challenge', code=403)
+	if not hmac.compare_digest(challenge[:32], _sign(challenge[32:])):
+		return Response('invalid challenge signature', code=403)
 
 	host = request.headers['Host']
 	if ':' in host:
 		host = host.split(':', 1)[0]
 	try:
 		registration = webauthn.verify_registration_response(credential=credential,
-			expected_challenge=challenge.challenge, expected_rp_id=host,
+			expected_challenge=challenge, expected_rp_id=host,
 			expected_origin=['https://babydebugger.app', 'http://localhost:8000'])
+		db.User.create(username=username, public_key=registration.credential_public_key)
 	except webauthn.helpers.exceptions.InvalidRegistrationResponse:
 		return Response(code=403)
-	print(registration)
 	return Response.json(True)
+
+def _sign(msg: bytes) -> bytes:
+	return hashlib.blake2b(msg, key=config.webauthn_challenge_secret, digest_size=32).digest()
 
 def get_babies(request: Request) -> Response:
 	babies = db.Baby.select()

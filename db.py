@@ -1,7 +1,6 @@
 import pathlib
 
-from peewee import BlobField, CharField, CompositeKey, DateField, DateTimeField, ForeignKeyField, Model, \
-	SQL, SmallIntegerField, TimeField
+from peewee import BlobField, CharField, CompositeKey, DateField, ForeignKeyField, Model, SmallIntegerField, TimeField
 import playhouse.pool
 
 _pool_args = {'database': 'babydbg', 'user': 'babydbg', 'stale_timeout': 300}
@@ -15,11 +14,7 @@ class BaseModel(Model):
 
 class User(BaseModel):
 	username = CharField()
-
-class WebAuthnChallenge(BaseModel):
-	id = BlobField(primary_key=True)
-	challenge = BlobField()
-	created = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
+	public_key = BlobField()
 
 class Baby(BaseModel):
 	name = CharField()

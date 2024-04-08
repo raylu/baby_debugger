@@ -53,7 +53,7 @@ class BabyDebugger extends LitElement {
 
 	private _navigate(event: Event) {
 		event.preventDefault();
-		history.pushState({}, "", (event.target as HTMLAnchorElement).href);
+		history.pushState({}, '', (event.target as HTMLAnchorElement).href);
 		this._handleUrlChange();
 	}
 
@@ -84,8 +84,12 @@ class BabyDebugger extends LitElement {
 		const attestationResponse = await fetch('/api/register/attest', {
 			'method': 'POST',
 			'headers': {'Content-Type': 'application/json'},
-			'body': JSON.stringify({'credential': credObj}),
+			'body': JSON.stringify({'username': username, 'credential': credObj}),
 		});
+		if (attestationResponse.ok) {
+			history.pushState({}, '', '/');
+			this._handleUrlChange();
+		}
 	}
 
 	private _decode_urlsafebase64(urlsafeb64: string): Uint8Array {
