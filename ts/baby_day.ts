@@ -77,9 +77,9 @@ export class BabyDay extends LitElement {
 			complete: (result) => {
 				let date = new Date(this.day);
 				date = new Date(date.getTime() + date.getTimezoneOffset()*60*1000);
-				const yesterday = new Date();
+				const yesterday = new Date(date);
 				yesterday.setDate(date.getDate() - 1);
-				const tomorrow = new Date();
+				const tomorrow = new Date(date);
 				tomorrow.setDate(date.getDate() + 1);
 
 				let totalNapMins = 0;
