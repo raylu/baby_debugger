@@ -27,9 +27,7 @@ def root(request: Request, catchall: str | None=None) -> Response:
 	return Response.render(request, 'index.jinja2', {})
 
 def register_challenge(request: Request) -> Response:
-	host = request.headers['Host']
-	if ':' in host:
-		host = host.split(':', 1)[0]
+	host = _rp_id(request)
 	username: str = request.body['username']
 	if host not in ['babydebugger.app', 'localhost'] or len(username) < 2:
 		return Response(code=400)
@@ -53,17 +51,24 @@ def register_attest(request: Request) -> Response:
 	if not hmac.compare_digest(challenge[:32], _sign(challenge[32:])):
 		return Response('invalid challenge signature', code=403)
 
-	host = request.headers['Host']
-	if ':' in host:
-		host = host.split(':', 1)[0]
 	try:
 		registration = webauthn.verify_registration_response(credential=credential,
-			expected_challenge=challenge, expected_rp_id=host,
+			expected_challenge=challenge, expected_rp_id=_rp_id(request),
 			expected_origin=['https://babydebugger.app', 'http://localhost:8000'])
 		db.User.create(username=username, public_key=registration.credential_public_key)
 	except webauthn.helpers.exceptions.InvalidRegistrationResponse:
 		return Response(code=403)
 	return Response.json(True)
+
+def login_challenge(request: Request) -> Response:
+	authn_opts = webauthn.generate_authentication_options(rp_id=_rp_id(request))
+	return Response(webauthn.options_to_json(authn_opts), content_type='application/json')
+
+def _rp_id(request: Request) -> str:
+	host = request.headers['Host']
+	if ':' in host:
+		host = host.split(':', 1)[0]
+	return host
 
 def _sign(msg: bytes) -> bytes:
 	return hashlib.blake2b(msg, key=config.webauthn_challenge_secret, digest_size=32).digest()
@@ -119,6 +124,7 @@ routes: RouteDefinition = [
 	('GET', '/<path:catchall>', root),
 	('POST', '/api/register/challenge', register_challenge),
 	('POST', '/api/register/attest', register_attest),
+	('POST', '/api/login/challenge', login_challenge),
 	('GET', '/api/babies', get_babies),
 	('GET', '/api/baby/<baby_id>/day/<day>', get_day),
 	('POST', '/api/baby/<baby_id>/day/<day>/nap/<nap_number>', update_nap),

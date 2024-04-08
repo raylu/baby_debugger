@@ -92,6 +92,14 @@ class BabyDebugger extends LitElement {
 		}
 	}
 
+	private async _login(event: Event) {
+		event.preventDefault();
+		const challengeResponse = await fetch('/api/login/challenge', {'method': 'POST'});
+		const loginReq = await challengeResponse.json();
+		loginReq['challenge'] = this._decode_urlsafebase64(loginReq['challenge']);
+		await navigator.credentials.get({'publicKey': loginReq});
+	}
+
 	private _decode_urlsafebase64(urlsafeb64: string): Uint8Array {
 		const b64 = urlsafeb64.replace(/-/g, '+').replace(/_/g, '/');
 		return Uint8Array.from(atob(b64), (b) => b.codePointAt(0) as number);
@@ -105,15 +113,19 @@ class BabyDebugger extends LitElement {
 		switch (this.page) {
 			case Page.Root:
 				const now = new Date();
-				return this.babies.map((baby) => html`
+				const babyLinks = this.babies.map((baby) => html`
 					<a href="baby/${baby['id']}/day/${formatDate(now)}" @click="${this._navigate}">${baby['name']}</a>
 					<br>
-				`).concat([html`<a href="/register" @click="${this._navigate}">register</a>`]);
+				`)
+				return babyLinks.concat([html`
+					<p><a href="" @click="${this._login}">login</a>
+					<br><a href="/register" @click="${this._navigate}">register</a>
+				`]);
 			case Page.Register:
 				return html`
-					<form>
+					<form @submit="${this._register}">
 						<label>username: <input type="text"></label>
-						<br><input type="button" @click="${this._register}" value="register">
+						<br><input type="submit" value="register">
 					</form>
 				`
 			case Page.BabyDay:
