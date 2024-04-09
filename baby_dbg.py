@@ -13,6 +13,7 @@ import time
 import typing
 
 from pigwig import PigWig, Response
+from pigwig.exceptions import HTTPException
 import webauthn
 import webauthn.helpers.exceptions
 
@@ -32,24 +33,14 @@ def register_challenge(request: Request) -> Response:
 	if host not in ['babydebugger.app', 'localhost'] or len(username) < 2:
 		return Response(code=400)
 
-	challenge = struct.pack('Q', int(time.time())) + username.encode('utf-8')[:24]
-	challenge = _sign(challenge) + challenge
 	reg_opts = webauthn.generate_registration_options(rp_id=host, rp_name='baby debugger',
-			user_name=username, challenge=challenge)
+			user_name=username, challenge=_make_challenge(username))
 	return Response(webauthn.options_to_json(reg_opts), content_type='application/json')
 
 def register_attest(request: Request) -> Response:
 	username: str = request.body['username']
 	credential: dict = request.body['credential']
-	client_data = json.loads(webauthn.base64url_to_bytes(credential['response']['clientDataJSON']))
-	challenge = webauthn.base64url_to_bytes(client_data['challenge'])
-	(ts,) = struct.unpack('Q', challenge[32:40])
-	if ts + 300 < time.time():
-		return Response('challenge expired', code=403)
-	if username.encode('utf-8')[:24] != challenge[40:]:
-		return Response('username does not match challenge', code=403)
-	if not hmac.compare_digest(challenge[:32], _sign(challenge[32:])):
-		return Response('invalid challenge signature', code=403)
+	challenge = _verify_challenge(username, credential)
 
 	try:
 		registration = webauthn.verify_registration_response(credential=credential,
@@ -61,17 +52,50 @@ def register_attest(request: Request) -> Response:
 	return Response.json(True)
 
 def login_challenge(request: Request) -> Response:
-	authn_opts = webauthn.generate_authentication_options(rp_id=_rp_id(request))
+	username: str = request.body['username']
+	authn_opts = webauthn.generate_authentication_options(rp_id=_rp_id(request), challenge=_make_challenge(username))
 	return Response(webauthn.options_to_json(authn_opts), content_type='application/json')
+
+def login_assert(request: Request) -> Response:
+	username: str = request.body['username']
+	user = db.User.get_or_none(username=username)
+	if user is None:
+		return Response(code=403)
+
+	assertion: dict = request.body['assertion']
+	challenge = _verify_challenge(username, assertion)
+	try:
+		webauthn.verify_authentication_response(credential=assertion, expected_challenge=challenge,
+				credential_public_key=user.public_key, credential_current_sign_count=0,
+				expected_rp_id=_rp_id(request), expected_origin=['https://babydebugger.app', 'http://localhost:8000'])
+	except webauthn.helpers.exceptions.InvalidAuthenticationResponse:
+		return Response(code=403)
+	return Response.json(True)
+
+def _make_challenge(username: str) -> bytes:
+	challenge = struct.pack('Q', int(time.time())) + username.encode('utf-8')[:24]
+	return _sign(challenge) + challenge
+
+def _verify_challenge(username: str, credential: dict) -> bytes:
+	client_data = json.loads(webauthn.base64url_to_bytes(credential['response']['clientDataJSON']))
+	challenge = webauthn.base64url_to_bytes(client_data['challenge'])
+	(ts,) = struct.unpack('Q', challenge[32:40])
+	if ts + 300 < time.time():
+		raise HTTPException(403, 'challenge expired')
+	if username.encode('utf-8')[:24] != challenge[40:]:
+		raise HTTPException(403, 'username does not match challenge')
+	if not hmac.compare_digest(challenge[:32], _sign(challenge[32:])):
+		raise HTTPException(403, 'invalid challenge signature')
+	return challenge
+
+def _sign(msg: bytes) -> bytes:
+	return hashlib.blake2b(msg, key=config.webauthn_challenge_secret, digest_size=32).digest()
 
 def _rp_id(request: Request) -> str:
 	host = request.headers['Host']
 	if ':' in host:
 		host = host.split(':', 1)[0]
 	return host
-
-def _sign(msg: bytes) -> bytes:
-	return hashlib.blake2b(msg, key=config.webauthn_challenge_secret, digest_size=32).digest()
 
 def get_babies(request: Request) -> Response:
 	babies = db.Baby.select()
@@ -125,6 +149,7 @@ routes: RouteDefinition = [
 	('POST', '/api/register/challenge', register_challenge),
 	('POST', '/api/register/attest', register_attest),
 	('POST', '/api/login/challenge', login_challenge),
+	('POST', '/api/login/assert', login_assert),
 	('GET', '/api/babies', get_babies),
 	('GET', '/api/baby/<baby_id>/day/<day>', get_day),
 	('POST', '/api/baby/<baby_id>/day/<day>/nap/<nap_number>', update_nap),

@@ -7,6 +7,7 @@ import {formatDate} from './date';
 enum Page {
 	Root,
 	Register,
+	Login,
 	BabyDay,
 }
 
@@ -43,6 +44,8 @@ class BabyDebugger extends LitElement {
 			this.page = Page.Root;
 		else if (location.pathname === '/register')
 			this.page = Page.Register;
+		else if (location.pathname === '/login')
+			this.page = Page.Login;
 		else if (location.pathname.startsWith('/baby/')) {
 			this.page = Page.BabyDay;
 			const split = location.pathname.split('/', 5);
@@ -60,15 +63,13 @@ class BabyDebugger extends LitElement {
 	private async _register(event: Event) {
 		event.preventDefault();
 		const username = (this.renderRoot.querySelector('input') as HTMLInputElement).value;
-		const challengeResponse = await fetch('/api/register/challenge', {
-			'method': 'POST',
-			'headers': {'Content-Type': 'application/json'},
-			'body': JSON.stringify({username}),
-		});
+		const challengeResponse = await this._post_json('/api/register/challenge', {username});
 		const pkOpts = await challengeResponse.json();
 		pkOpts['challenge'] = this._decode_urlsafebase64(pkOpts['challenge']);
 		pkOpts['user']['id'] = this._decode_urlsafebase64(pkOpts['user']['id']);
 		const credential = await navigator.credentials.create({'publicKey': pkOpts}) as PublicKeyCredential;
+		if (credential === null)
+			return;
 
 		const credResponse = credential.response as AuthenticatorAttestationResponse;
 		const credObj = {
@@ -81,11 +82,8 @@ class BabyDebugger extends LitElement {
 				'transports': credResponse.getTransports(),
 			}
 		};
-		const attestationResponse = await fetch('/api/register/attest', {
-			'method': 'POST',
-			'headers': {'Content-Type': 'application/json'},
-			'body': JSON.stringify({'username': username, 'credential': credObj}),
-		});
+		const attestationResponse = await this._post_json('/api/register/attest',
+				{'username': username, 'credential': credObj});
 		if (attestationResponse.ok) {
 			history.pushState({}, '', '/');
 			this._handleUrlChange();
@@ -94,10 +92,33 @@ class BabyDebugger extends LitElement {
 
 	private async _login(event: Event) {
 		event.preventDefault();
-		const challengeResponse = await fetch('/api/login/challenge', {'method': 'POST'});
+		const username = (this.renderRoot.querySelector('input') as HTMLInputElement).value;
+		const challengeResponse = await this._post_json('/api/login/challenge', {username});
 		const loginReq = await challengeResponse.json();
 		loginReq['challenge'] = this._decode_urlsafebase64(loginReq['challenge']);
-		await navigator.credentials.get({'publicKey': loginReq});
+		const assertion = await navigator.credentials.get({'publicKey': loginReq}) as PublicKeyCredential;
+		if (assertion === null)
+			return;
+
+		const assertObj = {
+			'id': assertion.id,
+			'rawId': this._encode_base64(assertion.rawId),
+			'type': assertion.type,
+			'response': Object.fromEntries(Object.entries(assertion.response).map(
+					([k, v]) => [k, this._encode_base64(v)])),
+			'authenticatorAttachment': assertion.authenticatorAttachment,
+			'clientExtensionResults': assertion.getClientExtensionResults(),
+		}
+		const assertionResponse = await this._post_json('/api/login/assert',
+				{'username': username, 'assertion': assertObj});
+	}
+
+	private _post_json(path: RequestInfo, body: any): Promise<Response> {
+		return fetch(path, {
+			'method': 'POST',
+			'headers': {'Content-Type': 'application/json'},
+			'body': JSON.stringify(body),
+		})
 	}
 
 	private _decode_urlsafebase64(urlsafeb64: string): Uint8Array {
@@ -118,7 +139,7 @@ class BabyDebugger extends LitElement {
 					<br>
 				`)
 				return babyLinks.concat([html`
-					<p><a href="" @click="${this._login}">login</a>
+					<p><a href="/login" @click="${this._navigate}">login</a>
 					<br><a href="/register" @click="${this._navigate}">register</a>
 				`]);
 			case Page.Register:
@@ -126,6 +147,13 @@ class BabyDebugger extends LitElement {
 					<form @submit="${this._register}">
 						<label>username: <input type="text"></label>
 						<br><input type="submit" value="register">
+					</form>
+				`
+			case Page.Login:
+				return html`
+					<form @submit="${this._login}">
+						<label>username: <input type="text"></label>
+						<br><input type="submit" value="login">
 					</form>
 				`
 			case Page.BabyDay:
