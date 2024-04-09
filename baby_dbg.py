@@ -70,7 +70,10 @@ def login_assert(request: Request) -> Response:
 				expected_rp_id=_rp_id(request), expected_origin=['https://babydebugger.app', 'http://localhost:8000'])
 	except webauthn.helpers.exceptions.InvalidAuthenticationResponse:
 		return Response(code=403)
-	return Response.json(True)
+
+	response = Response.json(True)
+	response.set_secure_cookie(request, 'user_id', user.id)
+	return response
 
 def _make_challenge(username: str) -> bytes:
 	challenge = struct.pack('Q', int(time.time())) + username.encode('utf-8')[:24]
@@ -160,7 +163,7 @@ routes: RouteDefinition = [
 def response_done_handler(request, response) -> None:
 	db.db.close()
 
-app = PigWig(routes, template_dir='templates', response_done_handler=response_done_handler)
+app = PigWig(routes, template_dir='templates', cookie_secret=config.cookie_secret, response_done_handler=response_done_handler)
 
 if __name__ == '__main__':
 	mimetypes.add_type('application/json', '.map')

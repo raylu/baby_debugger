@@ -111,6 +111,10 @@ class BabyDebugger extends LitElement {
 		}
 		const assertionResponse = await this._post_json('/api/login/assert',
 				{'username': username, 'assertion': assertObj});
+		if (assertionResponse.ok) {
+			history.pushState({}, '', '/');
+			this._handleUrlChange();
+		}
 	}
 
 	private _post_json(path: RequestInfo, body: any): Promise<Response> {
