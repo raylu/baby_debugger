@@ -9,6 +9,7 @@ import json
 import mimetypes
 from os import path
 import struct
+import subprocess
 import sys
 import time
 import typing
@@ -25,8 +26,10 @@ if typing.TYPE_CHECKING:
 	from pigwig import Request
 	from pigwig.routes import RouteDefinition
 
+version = None
+
 def root(request: Request, catchall: str | None=None) -> Response:
-	return Response.render(request, 'index.jinja2', {})
+	return Response.render(request, 'index.jinja2', {'version': version})
 
 def register_challenge(request: Request) -> Response:
 	host = _rp_id(request)
@@ -174,6 +177,7 @@ app = PigWig(routes, template_dir='templates', cookie_secret=config.cookie_secre
 
 if __name__ == '__main__':
 	mimetypes.add_type('application/json', '.map')
+	version = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.rstrip()
 	port = 8000
 	if len(sys.argv) == 2: # production
 		import fastwsgi
