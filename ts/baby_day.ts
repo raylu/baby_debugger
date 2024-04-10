@@ -1,7 +1,9 @@
 import {Task} from '@lit/task';
 import {html, css, LitElement} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
+
 import {formatDate} from './date';
+import globalCSS from './style';
 
 interface DayNaps {
 	baby: {'name': string};
@@ -72,7 +74,7 @@ export class BabyDay extends LitElement {
 	}
 
 	render() {
-		const inner = this._readTask.render({
+		return this._readTask.render({
 			pending: () => html`loading...`,
 			complete: (result) => {
 				let date = new Date(this.day);
@@ -97,35 +99,32 @@ export class BabyDay extends LitElement {
 				});
 				return html`
 					<header>
-						<h1>${this.name}</h1>
-						<h2>${this.day}</h2>
-					</header>
-					<section>
 						<a href="${formatDate(yesterday)}" @click="${this._navigate}">←</a>
 						<div>
-							${result.cached ? html`<div class="offline">offline mode; saving disabled</div>` : ''}
-							<div>morning (...${this.naps[0].wakeUpTime})</div>
-							<div>nap 1 (${this.naps[0].sleepTimeFormatted} - ${this._formatTime(this.naps[1].wakeUpTime)})</div>
-							<div>nap 2 (${this.naps[1].sleepTimeFormatted} - ${this._formatTime(this.naps[2].wakeUpTime)})</div>
-							<div>nap 3 (${this.naps[2].sleepTimeFormatted} - ${this._formatTime(this.naps[3].wakeUpTime)})</div>
-							<div>nap 4 (${this.naps[3].sleepTimeFormatted} - ${this._formatTime(this.naps[4].wakeUpTime)})</div>
-							<div>night (${this.naps[4].sleepTimeFormatted}...)</div>
-
-							<div class="total">
-								total naptime: ${this._formatDuration(totalNapMins)}
-								<br>total awake time: ${this._formatDuration(totalAwakeMins)}
-							</div>
+							<h1>${this.name}</h1>
+							<h2>${this.day}</h2>
 						</div>
 						<a href="${formatDate(tomorrow)}" @click="${this._navigate}">→</a>
+					</header>
+					<section>
+						${result.cached ? html`<div class="offline">offline mode; saving disabled</div>` : ''}
+						<div>morning (...${this.naps[0].wakeUpTime})</div>
+						<div>nap 1 (${this.naps[0].sleepTimeFormatted} - ${this._formatTime(this.naps[1].wakeUpTime)})</div>
+						<div>nap 2 (${this.naps[1].sleepTimeFormatted} - ${this._formatTime(this.naps[2].wakeUpTime)})</div>
+						<div>nap 3 (${this.naps[2].sleepTimeFormatted} - ${this._formatTime(this.naps[3].wakeUpTime)})</div>
+						<div>nap 4 (${this.naps[3].sleepTimeFormatted} - ${this._formatTime(this.naps[4].wakeUpTime)})</div>
+						<div>night (${this.naps[4].sleepTimeFormatted}...)</div>
+
+						<div class="total">
+							total naptime: ${this._formatDuration(totalNapMins)}
+							<br>total awake time: ${this._formatDuration(totalAwakeMins)}
+						</div>
 					</section>
 					${this.naps}
 				`;
 			},
 			error: (e) => html`${e}`
 		});
-		return html`
-			<main>${inner}</main>
-		`;
 	}
 
 	private _makeNap(number: number, nap: Nap | undefined, cached: boolean, defaultAwakeWindow: number) {
@@ -157,21 +156,25 @@ export class BabyDay extends LitElement {
 			return mins + ' minutes';
 	}
 
-	static styles = css`
+	static styles = [globalCSS, css`
 		header {
-			width: 400px;
-			margin: 1em auto;
-			background-color: #333333;
-			color: #eee;
-			padding: 8px;
-		}
-		section {
 			display: flex;
 			flex-direction: row;
 			justify-content: space-between;
 			align-items: center;
-			width: 400px;
-			margin: 0 auto;
+			gap: 16px;
+			margin: 1em auto;
+			background-color: #333;
+			padding: 8px;
+		}
+		header > div {
+			flex-grow: 1;
+		}
+		section {
+			margin: 0 10px;
+			padding: 16px;
+			background-color: #333;
+			border-radius: 4px;
 		}
 		a {
 			color: #58a;
@@ -184,7 +187,7 @@ export class BabyDay extends LitElement {
 		.total {
 			margin-top: 1em;
 		}
-	`;
+	`];
 }
 
 enum SavingStatus {
@@ -211,7 +214,7 @@ export class NapSection extends LitElement {
 	calmDown = 15;
 	@property({type: String})
 	sleepTimeFormatted = '';
-	@property({type: Date})
+	@property({attribute: false})
 	sleepTimeDate = new Date();
 	@property({type: String})
 	putDownTime = '';
@@ -301,14 +304,14 @@ export class NapSection extends LitElement {
 			</section>`;
 	}
 
-	static styles = css`
+	static styles = [globalCSS, css`
 		section {
 			display: flex;
 			flex-direction: column;
-			width: 400px;
-			margin: 1em auto;
-			padding: 10px;
-			border: 1px solid #111;
+			margin: 1em 10px;
+			padding: 16px;
+			border-radius: 4px;
+			background-color: #333;
 		}
 		section > form {
 			display: flex;
@@ -344,10 +347,9 @@ export class NapSection extends LitElement {
 			width: 88px;
 			padding: 8px 0;
 			border-radius: 38px;
-			color: #eee;
 		}
 		input[type="button"]:disabled {
 			background-color: #7E389E80;
 		}
-	`;
+	`];
 }

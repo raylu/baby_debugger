@@ -2,8 +2,9 @@ import {html, css, LitElement} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 
 import './baby_day';
-import {formatDate} from './date';
 import {getCookie} from './cookie';
+import {formatDate} from './date';
+import globalCSS from './style';
 
 enum Page {
 	Root,
@@ -194,12 +195,17 @@ class BabyDebugger extends LitElement {
 		}
 	}
 
-	static styles = css`
+	static styles = [globalCSS, css`
+		:host {
+			display: block;
+			width: 400px;
+			margin: 0 auto;
+		}
 		a {
 			color: #58a;
 			text-decoration: none;
 		}
-	`;
+	`];
 }
 
 (async function() {
