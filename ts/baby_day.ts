@@ -96,7 +96,10 @@ export class BabyDay extends LitElement {
 					}
 				});
 				return html`
-					<h1>${this.name} &mdash; ${this.day}</h1>
+					<header>
+						<h1>${this.name}</h1>
+						<h2>${this.day}</h2>
+					</header>
 					<section>
 						<a href="${formatDate(yesterday)}" @click="${this._navigate}">←</a>
 						<div>
@@ -155,9 +158,12 @@ export class BabyDay extends LitElement {
 	}
 
 	static styles = css`
-		h1 {
+		header {
 			width: 400px;
 			margin: 1em auto;
+			background-color: #333333;
+			color: #eee;
+			padding: 8px;
 		}
 		section {
 			display: flex;
@@ -261,7 +267,7 @@ export class NapSection extends LitElement {
 		let buttonLabel;
 		switch (this.saving) {
 			case SavingStatus.None:
-				buttonLabel = '→'; break;
+				buttonLabel = 'calculate'; break;
 			case SavingStatus.Saving:
 				buttonLabel = 'saving...'; break;
 			case SavingStatus.Error:
@@ -331,6 +337,17 @@ export class NapSection extends LitElement {
 		}
 		input[type="time"]::-webkit-calendar-picker-indicator {
 			filter: invert(0.7);
+		}
+		input[type="button"] {
+			background-color: #7E389E;
+			border: 0;
+			width: 88px;
+			padding: 8px 0;
+			border-radius: 38px;
+			color: #eee;
+		}
+		input[type="button"]:disabled {
+			background-color: #7E389E80;
 		}
 	`;
 }
