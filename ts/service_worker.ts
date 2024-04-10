@@ -13,7 +13,7 @@ self.addEventListener('install', (event: ExtendableEvent) => {
 			'/static/icon.svg',
 			'/static/style.css',
 		]);
-		self.skipWaiting();
+		void self.skipWaiting();
 	})());
 });
 

@@ -150,7 +150,7 @@ class BabyDebugger extends LitElement {
 
 	render() {
 		switch (this.page) {
-			case Page.Root:
+			case Page.Root: {
 				const now = new Date();
 				if (this.username) {
 					const babyLinks = this.babies.map((baby) => html`
@@ -168,6 +168,7 @@ class BabyDebugger extends LitElement {
 						<a href="/login" @click="${this._navigate}">login</a>
 						<br><a href="/register" @click="${this._navigate}">register</a>
 					`;
+			}
 			case Page.Register:
 				return html`
 					<form @submit="${this._register}">
@@ -213,7 +214,7 @@ class BabyDebugger extends LitElement {
 	app.babies = await response.json();
 	(document.querySelector('body') as HTMLBodyElement).appendChild(app);
 
-	navigator.serviceWorker.register('/service_worker.js');
+	void navigator.serviceWorker.register('/service_worker.js');
 	addEventListener('beforeinstallprompt', (event) => {
 		console.log('installable!', event);
 	})

@@ -15,7 +15,7 @@ interface Nap {
 	calm_down_time: number;
 }
 
-const timeFormat: Intl.DateTimeFormatOptions = {hour: "2-digit", minute: "2-digit"};
+const timeFormat: Intl.DateTimeFormatOptions = {hour: '2-digit', minute: '2-digit'};
 const navigate = new Event('navigate', {composed: true});
 const napUpdated = new Event('nap-updated', {composed: true});
 

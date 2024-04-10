@@ -1,13 +1,16 @@
 {
   "dependencies": {
     "@lit/task": "^1.0.0",
+    "esbuild": "^0.20.2",
     "lit": "^3.1.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^7.6.0"
   },
   "scripts": {
     "build": "esbuild ts/{app,service_worker}.ts --bundle --format=esm --outdir=static --sourcemap",
     "watch": "bun run build --watch"
-  },
-  "devDependencies": {
-    "esbuild": "^0.20.2"
   }
 }
