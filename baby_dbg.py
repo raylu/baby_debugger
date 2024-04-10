@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import hmac
 import json
@@ -72,7 +73,8 @@ def login_assert(request: Request) -> Response:
 		return Response(code=403)
 
 	response = Response.json(True)
-	response.set_secure_cookie(request, 'user_id', user.id)
+	response.set_secure_cookie(request, 'user_id', user.id, max_age=datetime.timedelta(days=30), http_only=True)
+	response.set_cookie('username', user.username, max_age=datetime.timedelta(days=30))
 	return response
 
 def _make_challenge(username: str) -> bytes:
@@ -99,6 +101,12 @@ def _rp_id(request: Request) -> str:
 	if ':' in host:
 		host = host.split(':', 1)[0]
 	return host
+
+def logout(request: Request) -> Response:
+	response = Response.json(True)
+	response.set_cookie('user_id', '', expires=datetime.datetime.min)
+	response.set_cookie('username', '', expires=datetime.datetime.min)
+	return response
 
 def get_babies(request: Request) -> Response:
 	babies = db.Baby.select()
@@ -153,6 +161,7 @@ routes: RouteDefinition = [
 	('POST', '/api/register/attest', register_attest),
 	('POST', '/api/login/challenge', login_challenge),
 	('POST', '/api/login/assert', login_assert),
+	('POST', '/api/logout', logout),
 	('GET', '/api/babies', get_babies),
 	('GET', '/api/baby/<baby_id>/day/<day>', get_day),
 	('POST', '/api/baby/<baby_id>/day/<day>/nap/<nap_number>', update_nap),
@@ -163,7 +172,8 @@ routes: RouteDefinition = [
 def response_done_handler(request, response) -> None:
 	db.db.close()
 
-app = PigWig(routes, template_dir='templates', cookie_secret=config.cookie_secret, response_done_handler=response_done_handler)
+app = PigWig(routes, template_dir='templates', cookie_secret=config.cookie_secret,
+		response_done_handler=response_done_handler)
 
 if __name__ == '__main__':
 	mimetypes.add_type('application/json', '.map')

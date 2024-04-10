@@ -3,6 +3,7 @@ import {customElement, property, state} from 'lit/decorators.js';
 
 import './baby_day';
 import {formatDate} from './date';
+import {getCookie} from './cookie';
 
 enum Page {
 	Root,
@@ -24,6 +25,8 @@ class BabyDebugger extends LitElement {
 	@state()
 	page = Page.Root;
 	@state()
+	username = '';
+	@state()
 	babyID = 0;
 	@state()
 	day = '';
@@ -35,6 +38,7 @@ class BabyDebugger extends LitElement {
 
 	connectedCallback() {
 		super.connectedCallback()
+		this.username = getCookie('username') ?? '';
 		addEventListener('popstate', this._handleUrlChange.bind(this));
 		this._handleUrlChange();
 	}
@@ -112,9 +116,18 @@ class BabyDebugger extends LitElement {
 		const assertionResponse = await this._post_json('/api/login/assert',
 				{'username': username, 'assertion': assertObj});
 		if (assertionResponse.ok) {
+			this.username = getCookie('username') ?? '';
 			history.pushState({}, '', '/');
 			this._handleUrlChange();
 		}
+	}
+
+	private async _logout(event: Event) {
+		event.preventDefault();
+		await fetch('/api/logout', {'method': 'POST'});
+		this.username = getCookie('username') ?? '';
+		history.pushState({}, '', '/');
+		this._handleUrlChange();
 	}
 
 	private _post_json(path: RequestInfo, body: any): Promise<Response> {
@@ -138,14 +151,22 @@ class BabyDebugger extends LitElement {
 		switch (this.page) {
 			case Page.Root:
 				const now = new Date();
-				const babyLinks = this.babies.map((baby) => html`
-					<a href="baby/${baby['id']}/day/${formatDate(now)}" @click="${this._navigate}">${baby['name']}</a>
-					<br>
-				`)
-				return babyLinks.concat([html`
-					<p><a href="/login" @click="${this._navigate}">login</a>
-					<br><a href="/register" @click="${this._navigate}">register</a>
-				`]);
+				if (this.username) {
+					const babyLinks = this.babies.map((baby) => html`
+						<a href="baby/${baby['id']}/day/${formatDate(now)}" @click="${this._navigate}">${baby['name']}</a>
+						<br>
+					`);
+					babyLinks.push(html`
+						<p>
+							<a href="/" @click="${this._logout}">logout</a>
+						</p>
+					`)
+					return babyLinks;
+				} else 
+					return html`
+						<a href="/login" @click="${this._navigate}">login</a>
+						<br><a href="/register" @click="${this._navigate}">register</a>
+					`;
 			case Page.Register:
 				return html`
 					<form @submit="${this._register}">
