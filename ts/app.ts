@@ -37,7 +37,7 @@ class BabyDebugger extends LitElement {
 	}
 
 	connectedCallback() {
-		super.connectedCallback()
+		super.connectedCallback();
 		this.username = getCookie('username') ?? '';
 		addEventListener('popstate', this._handleUrlChange.bind(this));
 		this._handleUrlChange();
@@ -111,7 +111,7 @@ class BabyDebugger extends LitElement {
 			'response': {} as any,
 			'authenticatorAttachment': assertion.authenticatorAttachment,
 			'clientExtensionResults': assertion.getClientExtensionResults(),
-		}
+		};
 		for (const prop in assertion.response)
 			assertObj['response'][prop] = this._encode_base64((assertion.response as any)[prop]);
 		const assertionResponse = await this._post_json('/api/login/assert',
@@ -136,7 +136,7 @@ class BabyDebugger extends LitElement {
 			'method': 'POST',
 			'headers': {'Content-Type': 'application/json'},
 			'body': JSON.stringify(body),
-		})
+		});
 	}
 
 	private _decode_urlsafebase64(urlsafeb64: string): Uint8Array {
@@ -161,7 +161,7 @@ class BabyDebugger extends LitElement {
 						<p>
 							<a href="/" @click="${this._logout}">logout</a>
 						</p>
-					`)
+					`);
 					return babyLinks;
 				} else 
 					return html`
@@ -175,14 +175,14 @@ class BabyDebugger extends LitElement {
 						<label>username: <input type="text"></label>
 						<br><input type="submit" value="register">
 					</form>
-				`
+				`;
 			case Page.Login:
 				return html`
 					<form @submit="${this._login}">
 						<label>username: <input type="text"></label>
 						<br><input type="submit" value="login">
 					</form>
-				`
+				`;
 			case Page.BabyDay:
 				for (const baby of this.babies)
 					if (baby['id'] === this.babyID)
@@ -217,5 +217,5 @@ class BabyDebugger extends LitElement {
 	void navigator.serviceWorker.register('/service_worker.js');
 	addEventListener('beforeinstallprompt', (event) => {
 		console.log('installable!', event);
-	})
+	});
 })();

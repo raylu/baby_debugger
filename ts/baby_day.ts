@@ -67,7 +67,7 @@ export class BabyDay extends LitElement {
 
 	private _navigate(event: Event) {
 		event.preventDefault();
-		history.pushState({}, "", (event.target as HTMLAnchorElement).href);
+		history.pushState({}, '', (event.target as HTMLAnchorElement).href);
 		this.dispatchEvent(navigate);
 	}
 
@@ -119,7 +119,7 @@ export class BabyDay extends LitElement {
 						<a href="${formatDate(tomorrow)}" @click="${this._navigate}">→</a>
 					</section>
 					${this.naps}
-				`
+				`;
 			},
 			error: (e) => html`${e}`
 		});

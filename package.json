@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build": "esbuild ts/{app,service_worker}.ts --bundle --format=esm --outdir=static --sourcemap",
-    "watch": "bun run build --watch"
+    "watch": "bun run build --watch",
+    "lint": "bunx --bun eslint ts"
   }
 }
