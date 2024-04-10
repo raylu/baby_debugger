@@ -149,10 +149,7 @@ def static(request, file_path: str) -> Response:
 		return Response('not found', 404)
 	content_type, _ = mimetypes.guess_type(file_path)
 	assert content_type is not None
-	headers: list[tuple[str, str]] | None = None
-	if file_path.endswith('.js') and path.isfile(path.join('static', file_path + '.map')):
-		headers = [('SourceMap', path.join('/static', file_path + '.map'))]
-	return Response(body=content, content_type=content_type, extra_headers=headers)
+	return Response(body=content, content_type=content_type)
 
 routes: RouteDefinition = [
 	('GET', '/', root),

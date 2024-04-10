@@ -4,7 +4,10 @@
     "lit": "^3.1.2"
   },
   "scripts": {
-    "build": "bun build --outdir static --sourcemap=external --spliting ts/app.ts ts/service_worker.ts",
+    "build": "esbuild ts/{app,service_worker}.ts --bundle --format=esm --outdir=static --sourcemap",
     "watch": "bun run build --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.2"
   }
 }

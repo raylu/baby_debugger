@@ -108,12 +108,12 @@ class BabyDebugger extends LitElement {
 			'id': assertion.id,
 			'rawId': this._encode_base64(assertion.rawId),
 			'type': assertion.type,
-			'response': {},
+			'response': {} as any,
 			'authenticatorAttachment': assertion.authenticatorAttachment,
 			'clientExtensionResults': assertion.getClientExtensionResults(),
 		}
 		for (const prop in assertion.response)
-			assertObj['response'][prop] = this._encode_base64(assertion.response[prop]);
+			assertObj['response'][prop] = this._encode_base64((assertion.response as any)[prop]);
 		const assertionResponse = await this._post_json('/api/login/assert',
 				{'username': username, 'assertion': assertObj});
 		if (assertionResponse.ok) {
