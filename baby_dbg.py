@@ -182,6 +182,6 @@ if __name__ == '__main__':
 	if len(sys.argv) == 2: # production
 		import fastwsgi
 		port = int(sys.argv[1])
-		fastwsgi.run(app, '127.1', port)
+		fastwsgi.run(app, '127.0.0.1', port)
 	else: # dev
 		app.main()
